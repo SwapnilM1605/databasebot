@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Console</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4da8da;
+            --secondary-color: #232222;
+            --accent-color: #6bb9e6;
+            --background-color: #f9fafb;
+            --text-color: #333333;
+            --success-color: #3c763d;
+            --error-color: #a94442;
+            --info-color: #31708f;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--secondary-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            color: white;
+            height: 60px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .logo-left {
+            position: absolute;
+            left: 1.5rem;
+            width: 120px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        /* New DBWHIZ logo */
+        .navbar-logo {
+            position: absolute;
+            left: 10%;
+            transform: translateX(-50%);
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4da8da, #fbb034);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            letter-spacing: 2px;
+        }
+
+        /* Buttons */
+        .navbar-buttons {
+            display: flex;
+            gap: 0.5rem;
+            position: absolute;
+            right: 1.5rem;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, #ffb977 0%, #f78c6b 100%);
+            transform: translateY(-2px);
+        }
+
+        /* Active nav button */
+        .nav-button.active {
+            background: linear-gradient(135deg, #f38b4a, #ff8c66);
+            border: 2px solid #ffad5a;
+            color: white;
+            font-weight: 600;
+        }
+
+        .nav-button.active:hover {
+            background: linear-gradient(135deg, #df783a, #f67950);
+        }
+
+        .nav-button i {
+            font-size: 0.9rem;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .user-table {
+            width: 80%;
+            max-width: 1000px;
+            margin: 1.5rem auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-table th, .user-table td {
+            padding: 1rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .user-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .user-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .user-table tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .action-icons a, .action-icons form {
+            display: inline-block;
+            margin: 0 0.3rem;
+        }
+
+        .action-icons i {
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .action-icons .edit-icon {
+            color: #10b981;
+        }
+
+        .action-icons .edit-icon:hover {
+            color: #059669;
+        }
+
+        .action-icons .delete-icon {
+            color: #ef4444;
+        }
+
+        .action-icons .delete-icon:hover {
+            color: #dc2626;
+        }
+
+        .flash-messages {
+            width: 80%;
+            max-width: 1000px;
+            margin: 1.5rem auto;
+        }
+
+        .flash-messages ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .flash-messages li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .flash-messages .success {
+            background-color: #e6f4e8;
+            color: var(--success-color);
+        }
+
+        .flash-messages .error {
+            background-color: #fee2e2;
+            color: var(--error-color);
+        }
+
+        .flash-messages .info {
+            background-color: #e5f3fb;
+            color: var(--info-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-logo">DBWHIZ</div>
+        <div class="enterprise-info">
+            <span class="enterprise-name">{{ enterprise.name }}</span>
+            <span class="enterprise-id">(ID: {{ enterprise.id }})</span>
+        </div>
+        <div class="navbar-buttons">
+            <a href="/admin_console" class="nav-button active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/configuration" class="nav-button"><i class="fas fa-cog"></i> Configuration</a>
+            <a href="/audit_page" class="nav-button"><i class="fas fa-clipboard-list"></i> Audit</a>
+            <a href="/signup" class="nav-button"><i class="fas fa-user-plus"></i> Add User</a>
+            <a href="/logout" class="nav-button"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message | safe }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Access</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in enterprise.users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.access }}</td>
+                    <td>{{ user.timestamp }}</td>
+                    <td class="action-icons">
+                        <a href="/admin_update?username={{ user.username }}" title="Edit User">
+                            <i class="fas fa-edit edit-icon"></i>
+                        </a>
+                        <form action="/delete_user" method="post" style="display:inline;"
+                              onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.');">
+                            <input type="hidden" name="username" value="{{ user.username }}">
+                            <input type="hidden" name="source_page" value="admin_console">
+                            <button type="submit" style="border:none; background:none; padding:0; cursor:pointer;">
+                                <i class="fas fa-trash-alt delete-icon" title="Delete User"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

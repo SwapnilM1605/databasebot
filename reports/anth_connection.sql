@@ -1,0 +1,15 @@
+
+-- MySQL Workbench Connection Setup Instructions for User: anth
+-- Follow these steps to create a new connection in MySQL Workbench:
+-- 1. Open MySQL Workbench.
+-- 2. Click 'New Connection' on the home screen or go to Database > Manage Connections.
+-- 3. Enter the following details:
+--    - Connection Name: anth_connection (or any name you prefer)
+--    - Hostname: localhost
+--    - Port: 3306
+--    - Username: anth
+--    - Password: anth (click 'Store in Vault' or enter when prompted)
+--    - Default Schema: anth
+-- 4. Click 'Test Connection' to verify.
+-- 5. Click 'OK' to save the connection.
+-- Note: This is a separate connection from the admin's connection and only accesses your database (anth).

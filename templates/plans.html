@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBWHIZ - Pricing Plans</title>
+    <link rel="icon" href="https://www.gracekennedy.com/wp-content/uploads/cropped-site-identity-lg-192x192.png" sizes="192x192">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 500;
+            margin: 0 8px;
+            padding: 8px 16px !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .pricing-header {
+            padding: 60px 0 40px;
+            text-align: center;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .pricing-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+
+        .pricing-options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .pricing-options select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .pricing-options select:focus {
+            border-color: #3a5ca8;
+            outline: none;
+            box-shadow: 0 0 0 0.25rem rgba(58, 92, 168, 0.25);
+        }
+
+        .pricing-section {
+            padding: 40px 0;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+            height: 100%;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .pricing-card .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .pricing-card .per-user {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .pricing-card ul li {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .pricing-card .btn-primary {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(123, 143, 240, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .pricing-card .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(123, 143, 240, 0.6);
+        }
+
+        .enterprise-btn-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .btn-enterprise {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-enterprise:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(123, 143, 240, 0.6);
+            color: white;
+        }
+
+        .footer {
+            background: #1e3c72;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <img src="https://www.gracekennedy.com/wp-content/uploads/cropped-site-identity-lg-192x192.png" alt="Logo" width="30" height="30" class="d-inline-block align-top">
+                DBWHIZ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('enterprise') }}">Enterprise Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Pricing Header -->
+    <section class="pricing-header">
+        <div class="container">
+            <h1>Pricing Plans</h1>
+            <div class="pricing-options">
+                <select id="user-count" onchange="updatePricing()">
+                    <option value="1">1 User</option>
+                    <option value="5">5 Users</option>
+                    <option value="10">10 Users</option>
+                    <option value="20">20+ Users</option>
+                </select>
+                <select id="plan-type" onchange="updatePricing()">
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="pricing-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="pricing-card">
+                        <h3>Basic</h3>
+                        <div class="price" id="basic-price">$10</div>
+                        <div class="per-user">per user / month</div>
+                        <ul>
+                            <li>1 Database Connection</li>
+                            <li>Basic Natural Language Queries</li>
+                            <li>Standard Support</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" onclick="selectPlan('Basic', 'basic-price')">Choose Plan</a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="pricing-card">
+                        <h3>Premium</h3>
+                        <div class="price" id="premium-price">$18</div>
+                        <div class="per-user">per user / month</div>
+                        <ul>
+                            <li>5 Database Connections</li>
+                            <li>Advanced Queries & Visualizations</li>
+                            <li>Forecasting Tools</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" onclick="selectPlan('Premium', 'premium-price')">Choose Plan</a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="pricing-card">
+                        <h3>Professional</h3>
+                        <div class="price" id="professional-price">$25</div>
+                        <div class="per-user">per user / month</div>
+                        <ul>
+                            <li>Unlimited Database Connections</li>
+                            <li>Advanced Queries & Visualizations</li>
+                            <li>Forecasting Tools</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" onclick="selectPlan('Professional', 'professional-price')">Choose Plan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <p>© 2025 BT. All rights reserved.</p>
+                    <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updatePricing() {
+            const userCount = parseInt(document.getElementById('user-count').value);
+            const planType = document.getElementById('plan-type').value;
+
+            // Base prices per user per month
+            const basicBasePrice = 10;
+            const premiumBasePrice = 18;
+            const professionalBasePrice = 25;
+
+            // Adjust for yearly discount (e.g., 10% discount for yearly billing)
+            const discount = planType === 'yearly' ? 0.9 : 1;
+
+            // Update Basic Plan price
+            let basicPrice;
+            if (userCount === 20) {
+                basicPrice = 'Contact us';
+            } else {
+                basicPrice = `$${Math.round(basicBasePrice * userCount * discount)}`;
+                if (planType === 'yearly') {
+                    basicPrice += ' / year';
+                } else {
+                    basicPrice += ' / month';
+                }
+            }
+            document.getElementById('basic-price').textContent = basicPrice;
+
+            // Update premium Plan price
+            let premiumPrice;
+            if (userCount === 20) {
+                premiumPrice = 'Contact us';
+            } else {
+                premiumPrice = `$${Math.round(premiumBasePrice * userCount * discount)}`;
+                if (planType === 'yearly') {
+                    premiumPrice += ' / year';
+                } else {
+                    premiumPrice += ' / month';
+                }
+                }
+            document.getElementById('premium-price').textContent = premiumPrice;
+
+            // Update Professional Plan price
+            let professionalPrice;
+            if (userCount === 20) {
+                professionalPrice = 'Contact us';
+            } else {
+                professionalPrice = `$${Math.round(professionalBasePrice * userCount * discount)}`;
+                if (planType === 'yearly') {
+                    professionalPrice += ' / year';
+                } else {
+                    professionalPrice += ' / month';
+                }
+            }
+            document.getElementById('professional-price').textContent = professionalPrice;
+        }
+
+        function selectPlan(planName, priceId) {
+            const price = document.getElementById(priceId).textContent;
+            const userCount = document.getElementById('user-count').value;
+            const planType = document.getElementById('plan-type').value;
+            
+            // Construct URL with parameters
+            const url = `{{ url_for('payment') }}?plan=${encodeURIComponent(planName)}&price=${encodeURIComponent(price)}&users=${encodeURIComponent(userCount)}&type=${encodeURIComponent(planType)}`;
+            window.location.href = url;
+        }
+
+        // Initialize pricing on page load
+        updatePricing();
+    </script>
+</body>
+</html>

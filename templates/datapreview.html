@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBWhiz - Data Preview</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+        .sidebar {
+            width: 270px;
+            height: 100vh;
+            background: linear-gradient(to bottom, #1f1f1f, #232222);
+            color: #fff;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            overflow-y: auto;
+            flex-shrink: 0;
+            padding: 30px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+            z-index: 1000;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            box-shadow: 
+            0 4px 15px rgba(102, 126, 234, 0.4),
+            0 2px 8px rgba(118, 75, 162, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-toggle:hover {
+            background: #353535;
+            transform: scale(1.05);
+        }
+        .sidebar-header {
+            font-size: 1.4rem;
+            font-weight: 700;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            color: #e5e7eb;
+        }
+        .database-item {
+            margin-bottom: 10px;
+        }
+        .database-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .database-header:hover {
+            background: #353535;
+        }
+        .database-name {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .shared-label {
+            background: #3a5ca8;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .dropdown-icon {
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+        }
+        .dropdown-icon.open {
+            transform: rotate(90deg);
+        }
+        .table-list {
+            display: none;
+            padding-left: 20px;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .table-list.show {
+            display: flex;
+        }
+        .table-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .table-item:hover {
+            background: #353535;
+        }
+        .table-item.selected {
+            background: #3a5ca8;
+            color: #fff;
+        }
+        .main-content {
+            flex-grow: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            margin-left: 0;
+            transition: margin-left 0.3s cubic-bezier(.4,0,.2,1);
+            position: relative;
+        }
+        .main-content.sidebar-open {
+            margin-left: 270px;
+        }
+        .logo {
+            position: fixed;
+            top: 16px;
+            left: 60px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #232222;
+            background: #fff;
+            padding: 4px 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            z-index: 900;
+        }
+        .profile-container {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 1100;
+        }
+
+        .profile-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                0 2px 8px rgba(118, 75, 162, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(231, 227, 227, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Subtle shimmer effect */
+        .profile-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+            pointer-events: none;
+        }
+
+        /* Hover effects */
+        .profile-icon:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(102, 126, 234, 0.6),
+                0 4px 12px rgba(118, 75, 162, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+        }
+
+        .profile-icon:hover::before {
+            left: 100%;
+        }
+
+        /* Active/Click effect */
+        .profile-icon:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 
+                0 2px 8px rgba(236, 237, 240, 0.5),
+                inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Focus for accessibility */
+        .profile-icon:focus {
+            outline: none;
+        }
+
+        /* SVG icon styling */
+        .profile-icon svg {
+            width: 22px;
+            height: 22px;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+        }
+
+        .profile-icon:hover svg {
+            transform: scale(1.1);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+        }
+        .profile-menu {
+            display: none;
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 180px;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideIn 0.2s ease-out;
+            z-index: 901;
+        }
+        .profile-menu.show {
+            display: flex;
+        }
+        .profile-menu-item {
+            padding: 12px 16px;
+            color: #232222;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            text-align: left;
+            width: 100%;
+        }
+        .profile-menu-item:hover {
+            background: #f7f7f8;
+        }
+        .profile-menu-item.username {
+            font-weight: 500;
+            cursor: default;
+            color: #6b7280;
+        }
+        .profile-menu-item.username:hover {
+            background: none;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .back-button {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3a5ca8, #2d4a8c);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: background 0.2s, left 0.3s;
+            z-index: 900;
+        }
+        .main-content.sidebar-open .back-button {
+            left: 286px;
+        }
+        .back-button:hover {
+            background: linear-gradient(135deg, #2d4a8c, #1e3a8a);
+        }
+        .table-preview {
+            width: 100%;
+            max-width: 1200px;
+            margin: 24px auto;
+            background: linear-gradient(145deg, #ffffff, #f9fafb);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            position: relative;
+            padding-bottom: 48px; /* Add padding to accommodate the button */
+        }
+        .table-preview table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table-preview th,
+        .table-preview td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+            color: #1f2937;
+        }
+        .table-preview th {
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            font-weight: 600;
+            color: #111827;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .table-preview tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        .table-preview tr:hover {
+            background: #eff6ff;
+            transition: background 0.2s;
+        }
+        .table-preview td {
+            border-right: 1px solid #e5e7eb;
+        }
+        .table-preview td:last-child {
+            border-right: none;
+        }
+        .no-data {
+            text-align: center;
+            padding: 24px;
+            font-size: 1.1rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+        .loading {
+            text-align: center;
+            padding: 24px;
+            font-size: 1.1rem;
+            color: #3a5ca8;
+            font-weight: 500;
+        }
+        .delete-table-button {
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        .delete-table-button:hover {
+            color: #ff3333;
+        }
+        .upload-dictionary-button {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: background 0.2s, transform 0.2s;
+            display: none; /* Hidden by default */
+        }
+        .upload-dictionary-button.show {
+            display: block;
+        }
+        .upload-dictionary-button:hover {
+            background: linear-gradient(135deg, #388E3C, #2E7D32);
+            transform: scale(1.05);
+        }
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 220px;
+            }
+            .main-content.sidebar-open {
+                margin-left: 220px;
+            }
+            .main-content.sidebar-open .back-button {
+                left: 236px;
+            }
+            .main-content {
+                padding: 16px;
+            }
+            .table-preview th,
+            .table-preview td {
+                font-size: 0.85rem;
+                padding: 10px 12px;
+            }
+            .back-button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            .upload-dictionary-button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 600px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content.sidebar-open {
+                margin-left: 200px;
+            }
+            .main-content.sidebar-open .back-button {
+                left: 216px;
+            }
+            .database-header,
+            .table-item {
+                font-size: 0.9rem;
+            }
+            .table-preview th,
+            .table-preview td {
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+            .sidebar-header {
+                font-size: 1.2rem;
+            }
+            .upload-dictionary-button {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Updated Modal Styles for Standard Form Look with Wider Width */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1003;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #ffffff, #fafbfc);
+            margin: 3% auto;
+            padding: 0;
+            border: none;
+            width: 90%;
+            max-width: 800px; /* Increased from 600px to 800px */
+            border-radius: 16px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 8px 30px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            position: relative;
+            animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-50px) scale(0.9); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px 30px;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            padding-right: 60px; /* Add padding to prevent text from overlapping with close button */
+        }
+
+        .modal-header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+            font-weight: 300;
+            padding-right: 60px; /* Add padding to prevent text from overlapping with close button */
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10%;
+            transform: translateY(-50%);
+            color: black;
+            font-size: 28px;
+            font-weight: 300;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            background: rgba(3, 80, 143, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 10; /* Ensure close button stays on top */
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+            background: white;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.95rem;
+            letter-spacing: 0.025em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #f9fafb, #ffffff);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-input-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .file-input-display:hover::before {
+            left: 100%;
+        }
+
+        .file-input-display:hover {
+            border-color: #667eea;
+            background: linear-gradient(145deg, #f0f4ff, #ffffff);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .file-input-icon {
+            margin-right: 12px;
+            color: #667eea;
+            font-size: 1.5rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .file-input-text {
+            color: #6b7280;
+            font-size: 0.95rem;
+            z-index: 2;
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .file-input-display.has-file {
+            border-color: #10b981;
+            background: linear-gradient(145deg, #f0fdf4, #ffffff);
+        }
+
+        .file-input-display.has-file .file-input-icon {
+            color: #10b981;
+        }
+
+        .file-input-display.has-file .file-input-text {
+            color: #065f46;
+            font-weight: 500;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: none;
+            letter-spacing: 0.025em;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #f3f4f6, #e5e7eb);
+            color: #374151;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(145deg, #e5e7eb, #d1d5db);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .dictionary-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .dictionary-button:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: scale(1.1);
+        }
+
+        #dictionaryPreview {
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 20px;
+            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #dictionaryPreview h4 {
+            margin: 0 0 16px 0;
+            color: #1e293b;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        #dictionaryPreview pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 12px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .delete-button {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+        }
+
+        .delete-button:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Responsive updates for the wider modal */
+        @media (max-width: 900px) {
+            .modal-content {
+                max-width: 700px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .modal-content {
+                max-width: 90%;
+                margin: 5% auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .modal-content {
+                margin: 10% auto;
+                max-width: 95%;
+            }
+            .modal-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6H21V8H3V6ZM3 11H21V13H3V11ZM3 16H21V18H3V16Z" fill="#fff"/>
+            <rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" stroke-width="1.5"/>
+        </svg>
+    </button>
+    <div class="profile-container">
+        <button class="profile-icon" id="profileIcon" aria-label="Profile">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10ZM10 11.6667C6.66667 11.6667 0 13.3333 0 16.6667V20H20V16.6667C20 13.3333 13.3333 11.6667 10 11.6667Z" fill="#fff"/>
+            </svg>
+        </button>
+        <div class="profile-menu" id="profileMenu">
+            <div class="profile-menu-item username" id="profileUsername">Username</div>
+            <button class="profile-menu-item" id="profileChangePassword">Change Password</button>   
+            <button class="profile-menu-item" id="profileLogout">Logout</button>
+        </div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>Databases</span>
+        </div>
+        <div id="databaseList"></div>
+    </div>
+    <div class="main-content" id="mainContent">
+        <button class="back-button" onclick="window.location.href='/app'">Back to Chat</button>
+        <div class="table-preview" id="tablePreview">
+            <div id="tableContent" class="no-data" id="noDataMessage">Select a table to preview its data</div>
+            <button class="upload-dictionary-button" id="uploadDictionaryButton">Upload Data Dictionary</button>
+        </div>
+    </div>
+    <div id="dictionaryModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Upload Data Dictionary for <span id="modalTableName"></span></h3>
+            <p>Upload a JSON or CSV file containing column descriptions for this table.</p>
+            <form id="dictionaryForm">
+                <label for="dictionaryFile"><strong>Select File</strong> (JSON or CSV)</label>
+                <input type="file" id="dictionaryFile" accept=".json,.csv" required>
+                <button type="submit">📤 Upload Dictionary</button>
+            </form>
+            <div id="dictionaryPreview"></div>
+        </div>
+    </div>
+    <script>
+        let currentUsername = null;
+        let selectedTable = null;
+        let selectedDatabase = null;
+        let selectedDbType = null;
+        let sharedDatabases = [];
+        // Dictionary modal functions
+        let dictionaryModal = document.getElementById("dictionaryModal");
+        let dictionaryForm = document.getElementById("dictionaryForm");
+        let currentDictionaryTable = null;
+        let currentDictionaryDb = null;
+        let currentDictionaryType = null;
+
+        // Sidebar toggle logic
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        let sidebarOpen = true;
+
+        // Initialize sidebar as open
+        sidebar.classList.add('open');
+        mainContent.classList.add('sidebar-open');
+
+        sidebarToggle.onclick = function() {
+            sidebarOpen = !sidebarOpen;
+            sidebar.classList.toggle('open', sidebarOpen);
+            mainContent.classList.toggle('sidebar-open', sidebarOpen);
+        };
+
+        // Profile menu logic
+        const profileIcon = document.getElementById('profileIcon');
+        const profileMenu = document.getElementById('profileMenu');
+        const profileUsername = document.getElementById('profileUsername');
+        const profileLogout = document.getElementById('profileLogout');
+        const profileChangePassword = document.getElementById('profileChangePassword');
+        let profileMenuOpen = false;
+
+        profileIcon.onclick = function() {
+            profileMenuOpen = !profileMenuOpen;
+            profileMenu.classList.toggle('show', profileMenuOpen);
+        };
+
+        document.addEventListener('click', function(e) {
+            if (!profileIcon.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenuOpen = false;
+                profileMenu.classList.remove('show');
+            }
+        });
+
+        // Load current user
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/current-user');
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                if (data.username) {
+                    profileUsername.textContent = data.username;
+                    currentUsername = data.username; // Set currentUsername
+                    await loadDatabases(); // Load databases after setting username
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error loading user:', error);
+                window.location.href = '/login';
+            }
+        });
+
+        profileLogout.onclick = async function() {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = '/login';
+                } else {
+                    alert('Error logging out: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Failed to log out:', error);
+                alert('Error logging out: ' + error.message);
+            }
+        };
+
+        profileChangePassword.onclick = function() {
+            window.location.href = '/change_password';
+        };
+
+        // Load shared databases
+        async function loadSharedDatabases() {
+            try {
+                const response = await fetch('/api/shared-databases');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                sharedDatabases = data.shared_databases || [];
+                console.log('Loaded shared databases:', sharedDatabases);
+            } catch (error) {
+                console.error('Failed to load shared databases:', error);
+                sharedDatabases = [];
+            }
+        }
+
+        // Delete a table in a personal database
+        async function deleteTable(database, table, dbType) {
+            if (!confirm(`Are you sure you want to delete the table "${table}" in database "${database}" (${dbType})? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/delete-table', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ database, table, type: dbType })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Table "${table}" deleted successfully.`, 'success');
+                    // Clear table preview if the deleted table was selected
+                    if (selectedDatabase === database && selectedTable === table && selectedDbType === dbType) {
+                        document.getElementById('tableContent').innerHTML = '<div class="no-data" id="noDataMessage">Select a table to preview its data</div>';
+                        selectedTable = null;
+                        selectedDatabase = null;
+                        selectedDbType = null;
+                        document.getElementById('uploadDictionaryButton').classList.remove('show');
+                    }
+                    // Reload tables for the database
+                    const tableList = document.getElementById(`tableList-${database}-${dbType}`);
+                    if (tableList.classList.contains('show')) {
+                        await loadTables(database, dbType, tableList);
+                    }
+                } else {
+                    showToast('Error deleting table: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Failed to delete table:', error);
+                showToast('Error deleting table: ' + error.message, 'error');
+            }
+        }
+
+        // Delete a database
+        async function deleteDatabase(database, dbType) {
+            if (!confirm(`Are you sure you want to delete the database "${database}" (${dbType}) and all its tables? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/delete-database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ database, type: dbType })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Database "${database}" deleted successfully.`, 'success');
+                    // Clear table preview if the deleted database was selected
+                    if (selectedDatabase === database && selectedDbType === dbType) {
+                        document.getElementById('tableContent').innerHTML = '<div class="no-data" id="noDataMessage">Select a table to preview its data</div>';
+                        selectedDatabase = null;
+                        selectedTable = null;
+                        selectedDbType = null;
+                        document.getElementById('uploadDictionaryButton').classList.remove('show');
+                    }
+                    // Reload databases
+                    await loadDatabases();
+                } else {
+                    showToast('Error deleting database: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Failed to delete database:', error);
+                showToast('Error deleting database: ' + error.message, 'error');
+            }
+        }
+
+        // Load user databases
+        async function loadDatabases() {
+            try {
+                const userResponse = await fetch('/api/user-databases');
+                if (!userResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${userResponse.status}`);
+                }
+                const userData = await userResponse.json();
+
+                const databaseList = document.getElementById('databaseList');
+                databaseList.innerHTML = '';
+
+                if (userData.databases && userData.databases.length > 0) {
+                    await loadSharedDatabases();
+
+                    userData.databases.forEach(db => {
+                        const isShared = sharedDatabases.some(sharedDb => sharedDb.name === db.name && sharedDb.type === db.type);
+                        const isUsernameDb = db.name === currentUsername;
+
+                        const dbItem = document.createElement('div');
+                        dbItem.className = 'database-item';
+                        dbItem.innerHTML = `
+                            <div class="database-header" data-db="${db.name}" data-db-type="${db.type}">
+                                <span class="database-name">
+                                    ${db.name} (${db.type})
+                                    ${isShared ? '<span class="shared-label">Shared</span>' : ''}
+                                </span>
+                                <span class="dropdown-icon">▶</span>
+                                ${!isShared && !isUsernameDb ? `
+                                    <button class="delete-table-button" title="Delete Database" onclick="deleteDatabase('${db.name}', '${db.type}')">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M5 2H11M2 4H14M12 4L11.5 10C11.4 11.1 10.5 12 9.4 12H6.6C5.5 12 4.6 11.1 4.5 10L4 4M6 6V9M10 6V9" stroke="#ff4d4d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <div class="table-list" id="tableList-${db.name}-${db.type}"></div>
+                        `;
+                        databaseList.appendChild(dbItem);
+
+                        const dbHeader = dbItem.querySelector('.database-header');
+                        dbHeader.addEventListener('click', async (e) => {
+                            if (e.target.closest('.delete-table-button')) return;
+
+                            const tableList = dbItem.querySelector('.table-list');
+                            const dropdownIcon = dbHeader.querySelector('.dropdown-icon');
+                            const isOpen = tableList.classList.contains('show');
+
+                            if (!isOpen) {
+                                await loadTables(db.name, db.type, tableList);
+                                tableList.classList.add('show');
+                                dropdownIcon.classList.add('open');
+                            } else {
+                                tableList.classList.remove('show');
+                                dropdownIcon.classList.remove('open');
+                            }
+                        });
+                    });
+                } else {
+                    databaseList.innerHTML = '<div class="no-data">No databases available</div>';
+                }
+            } catch (error) {
+                console.error('Failed to load databases:', error);
+                document.getElementById('databaseList').innerHTML = '<div class="no-data">Error loading databases</div>';
+            }
+        }
+
+        // Load tables for a database
+        async function loadTables(database, dbType, tableListElement) {
+            try {
+                const response = await fetch('/api/database-tables', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ database, type: dbType })
+                });
+                const data = await response.json();
+                tableListElement.innerHTML = '';
+
+                const isShared = sharedDatabases.some(db => db.name === database && db.type === dbType);
+                const isUsernameDb = database === currentUsername;
+
+                if (data.tables && data.tables.length > 0) {
+                    data.tables.forEach(table => {
+                        const tableItem = document.createElement('div');
+                        tableItem.className = 'table-item';
+                        tableItem.innerHTML = `
+                            <span>${table}</span>
+                            <button class="dictionary-button" title="Data Dictionary" onclick="showDictionaryModal('${database}', '${table}', '${dbType}')">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 14.6667C11.6819 14.6667 14.6667 11.6819 14.6667 8C14.6667 4.3181 11.6819 1.33333 8 1.33333C4.3181 1.33333 1.33333 4.3181 1.33333 8C1.33333 11.6819 4.3181 14.6667 8 14.6667Z" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 10.6667V8" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 5.33333H8.00667" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            ${!isShared && !isUsernameDb ? `
+                                <button class="delete-table-button" title="Delete Table" onclick="deleteTable('${database}', '${table}', '${dbType}')">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M5 2H11M2 4H14M12 4L11.5 10C11.4 11.1 10.5 12 9.4 12H6.6C5.5 12 4.6 11.1 4.5 10L4 4M6 6V9M10 6V9" stroke="#ff4d4d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                        `;
+                        tableItem.addEventListener('click', async (e) => {
+                            if (e.target.closest('.delete-table-button') || e.target.closest('.dictionary-button')) return;
+                            const prevSelected = document.querySelector('.table-item.selected');
+                            if (prevSelected) {
+                                prevSelected.classList.remove('selected');
+                            }
+                            tableItem.classList.add('selected');
+                            selectedDatabase = database;
+                            selectedTable = table;
+                            selectedDbType = dbType;
+                            await loadTablePreview(database, table, dbType);
+                            // Show the upload dictionary button when a table is selected
+                            document.getElementById('uploadDictionaryButton').classList.add('show');
+                        });
+                        tableListElement.appendChild(tableItem);
+                    });
+                } else {
+                    tableListElement.innerHTML = '<div class="no-data">No tables available</div>';
+                }
+            } catch (error) {
+                console.error('Failed to load tables:', error);
+                tableListElement.innerHTML = '<div class="no-data">Error loading tables</div>';
+            }
+        }
+
+        // Load table preview
+        async function loadTablePreview(database, table, dbType) {
+            const tableContent = document.getElementById('tableContent');
+            const uploadButton = document.getElementById('uploadDictionaryButton');
+            tableContent.innerHTML = '<div class="loading">Loading data...</div>';
+
+            try {
+                const response = await fetch('/api/table-preview10', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ database, table, type: dbType })
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (data.columns && data.rows && data.rows.length > 0) {
+                    let tableHtml = '<table><thead><tr>';
+                    data.columns.forEach(col => {
+                        tableHtml += `<th>${col}</th>`;
+                    });
+                    tableHtml += '</tr></thead><tbody>';
+                    data.rows.forEach(row => {
+                        tableHtml += '<tr>';
+                        data.columns.forEach(col => {
+                            tableHtml += `<td>${row[col] || ''}</td>`;
+                        });
+                        tableHtml += '</tr>';
+                    });
+                    tableHtml += '</tbody></table>';
+                    tableContent.innerHTML = tableHtml;
+                } else {
+                    tableContent.innerHTML = '<div class="no-data">No data available in this table</div>';
+                }
+                // Ensure the upload button is visible and has its event listener
+                uploadButton.classList.add('show');
+            } catch (error) {
+                console.error('Failed to load table preview:', error);
+                tableContent.innerHTML = `<div class="no-data">Error loading data: ${error.message}</div>`;
+                uploadButton.classList.add('show');
+            }
+        }
+
+        async function checkSqlServerConfig() {
+            try {
+                const response = await fetch('/api/check-sqlserver-config');
+                const data = await response.json();
+                return data.has_config;
+            } catch (error) {
+                console.error('Error checking SQL Server config:', error);
+                return false;
+            }
+        }
+
+        // dictionary functions
+        function showDictionaryModal(database, table, dbType) {
+            currentDictionaryTable = table;
+            currentDictionaryDb = database;
+            currentDictionaryType = dbType;
+            document.getElementById("modalTableName").textContent = `${table} (${database})`;
+            dictionaryModal.style.display = "block";
+            loadDictionaryPreview(database, table, dbType);
+        }
+
+        document.querySelector(".close").onclick = function() {
+            dictionaryModal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == dictionaryModal) {
+                dictionaryModal.style.display = "none";
+            }
+        }
+
+        // Handle upload dictionary button click
+        document.getElementById('uploadDictionaryButton').onclick = function() {
+            if (selectedDatabase && selectedTable && selectedDbType) {
+                showDictionaryModal(selectedDatabase, selectedTable, selectedDbType);
+            } else {
+                showToast('Please select a table first', 'error');
+            }
+        };
+
+        dictionaryForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById("dictionaryFile");
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showToast("Please select a file", "error");
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('database', currentDictionaryDb);
+                formData.append('table', currentDictionaryTable);
+                formData.append('type', currentDictionaryType);
+                
+                // Upload the dictionary
+                const response = await fetch('/api/upload-dictionary', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Dictionary uploaded successfully", "success");
+                    loadDictionaryPreview(currentDictionaryDb, currentDictionaryTable, currentDictionaryType);
+                } else {
+                    throw new Error(data.error || "Failed to upload dictionary");
+                }
+            } catch (error) {
+                console.error("Error uploading dictionary:", error);
+                showToast("Error uploading dictionary: " + error.message, "error");
+            }
+        };
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = event => resolve(event.target.result);
+                reader.onerror = error => reject(error);
+                reader.readAsText(file);
+            });
+        }
+
+        async function loadDictionaryPreview(database, table, dbType) {
+            try {
+                const response = await fetch(`/api/get-dictionary?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}&type=${encodeURIComponent(dbType)}`);
+                const data = await response.json();
+                
+                const previewDiv = document.getElementById("dictionaryPreview");
+                if (data.dictionary) {
+                    previewDiv.innerHTML = `
+                        <h4>Current Dictionary:</h4>
+                        <pre>${JSON.stringify(data.dictionary, null, 2)}</pre>
+                        <button onclick="deleteDictionary('${database}', '${table}', '${dbType}')" class="delete-button">Delete Dictionary</button>
+                    `;
+                } else {
+                    previewDiv.innerHTML = "<p>No dictionary uploaded for this table.</p>";
+                }
+            } catch (error) {
+                console.error("Error loading dictionary:", error);
+                document.getElementById("dictionaryPreview").innerHTML = "<p>Error loading dictionary.</p>";
+            }
+        }
+
+        async function deleteDictionary(database, table, dbType) {
+            if (!confirm("Are you sure you want to delete the dictionary for this table?")) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/delete-dictionary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        database: database,
+                        table: table,
+                        type: dbType
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Dictionary deleted successfully", "success");
+                    loadDictionaryPreview(database, table, dbType);
+                } else {
+                    throw new Error(data.error || "Failed to delete dictionary");
+                }
+            } catch (error) {
+                console.error("Error deleting dictionary:", error);
+                showToast("Error deleting dictionary: " + error.message, "error");
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.padding = '10px 20px';
+            toast.style.background = type === 'error' ? '#e74c3c' : '#2ecc71';
+            toast.style.color = '#fff';
+            toast.style.borderRadius = '4px';
+            toast.style.zIndex = '1002';
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Initialize the page
+        async function init() {
+            // Ensure the upload button has its event listener on page load
+            document.getElementById('uploadDictionaryButton').onclick = function() {
+                if (selectedDatabase && selectedTable && selectedDbType) {
+                    showDictionaryModal(selectedDatabase, selectedTable, selectedDbType);
+                } else {
+                    showToast('Please select a table first', 'error');
+                }
+            };
+            await loadCurrentUser();
+        }
+
+        init();
+    </script>
+</body>
+</html>

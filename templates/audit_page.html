@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Audit Page</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4da8da;
+            --secondary-color: #232222;
+            --accent-color: #6bb9e6;
+            --background-color: #f9fafb;
+            --text-color: #333333;
+            --success-color: #3c763d;
+            --error-color: #a94442;
+            --info-color: #31708f;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--secondary-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            color: white;
+            height: 60px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .logo-left {
+            position: absolute;
+            left: 1.5rem;
+            width: 120px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        /* New DBWHIZ logo */
+        .navbar-logo {
+            position: absolute;
+            left: 10%;
+            transform: translateX(-50%);
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4da8da, #fbb034);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            letter-spacing: 2px;
+        }
+
+        /* Buttons */
+        .navbar-buttons {
+            display: flex;
+            gap: 0.5rem;
+            position: absolute;
+            right: 1.5rem;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, #ffb977 0%, #f78c6b 100%);
+            transform: translateY(-2px);
+        }
+
+        /* Active nav button */
+        .nav-button.active {
+            background: linear-gradient(135deg, #f38b4a, #ff8c66);
+            border: 2px solid #ffad5a;
+            color: white;
+            font-weight: 600;
+        }
+
+        .nav-button.active:hover {
+            background: linear-gradient(135deg, #df783a, #f67950);
+        }
+
+        .nav-button i {
+            font-size: 0.9rem;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 5px 0 10px 0;
+        }
+
+        .apply-button, .clear-filter-button {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin: 0 10px;
+            display: inline-block;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .apply-button:hover, .clear-filter-button:hover {
+            background: linear-gradient(135deg, #ffb977 0%, #f78c6b 100%);
+            transform: translateY(-2px);
+        }
+
+        .audit-table {
+            width: 80%;
+            max-width: 1000px;
+            margin: 1.5rem auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+
+        .audit-table th:nth-child(1), .audit-table td:nth-child(1) { /* Username */
+            width: 20% !important;
+        }
+        .audit-table th:nth-child(2), .audit-table td:nth-child(2) { /* Action */
+            width: 15% !important;
+        }
+        .audit-table th:nth-child(3), .audit-table td:nth-child(3) { /* Action Description */
+            width: 40% !important;
+        }
+        .audit-table th:nth-child(4), .audit-table td:nth-child(4) { /* Timestamp */
+            width: 25% !important;
+        }
+
+        .audit-table th, .audit-table td {
+            padding: 1rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .audit-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .audit-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .audit-table tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .filter-arrow::after {
+            content: " ▼";
+            font-size: 10px;
+            margin-left: 5px;
+        }
+
+        .filter-dropdown {
+            display: none;
+            position: absolute;
+            background-color: rgb(239, 124, 124);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            top: 100%;
+            left: 0;
+            min-width: 150px;
+            padding: 5px 0;
+        }
+
+        .filter-dropdown label {
+            display: block;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .filter-dropdown label:hover {
+            background-color: #332e2e;
+        }
+
+        .filter-dropdown input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        .sort-options {
+            display: none;
+            position: absolute;
+            background-color: rgb(239, 124, 124);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            top: 100%;
+            right: 0;
+            min-width: 120px;
+            padding: 5px 0;
+        }
+
+        .sort-options button {
+            display: block;
+            width: 100%;
+            padding: 5px 10px;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            color: white;
+        }
+
+        .sort-options button:hover {
+            background-color: #332e2e;
+        }
+
+        .flash-messages {
+            width: 80%;
+            max-width: 1000px;
+            margin: 1.5rem auto;
+        }
+
+        .flash-messages ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .flash-messages li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .flash-messages .success {
+            background-color: #e6f4e8;
+            color: var(--success-color);
+        }
+
+        .flash-messages .error {
+            background-color: #fee2e2;
+            color: var(--error-color);
+        }
+
+        .flash-messages .info {
+            background-color: #e5f3fb;
+            color: var(--info-color);
+        }
+
+        /* Add this new style for enterprise header */
+        .enterprise-header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .enterprise-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .enterprise-info {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .enterprise-stat {
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-logo">DBWHIZ</div>
+        <div class="navbar-buttons">
+            <a href="/admin_console" class="nav-button"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/configuration" class="nav-button"><i class="fas fa-cog"></i> Configuration</a>
+            <a href="/audit_page" class="nav-button active"><i class="fas fa-clipboard-list"></i> Audit</a>
+            <a href="/signup" class="nav-button"><i class="fas fa-user-plus"></i> Add User</a>
+            <a href="/logout" class="nav-button"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="enterprise-header">
+            <div class="enterprise-name">{{ enterprise.name }} Audit Logs</div>
+            <div class="enterprise-info">
+                <span class="enterprise-stat">
+                    <i class="fas fa-users"></i> {{ enterprise.users|length }} users
+                </span>
+                <span class="enterprise-stat">
+                    <i class="fas fa-database"></i> {{ enterprise.shared_databases|length }} shared databases
+                </span>
+                <span class="enterprise-stat">
+                    <i class="fas fa-history"></i> {{ logs|length }} log entries
+                </span>
+            </div>
+        </div>
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="button-container">
+            <button class="apply-button" onclick="applyFilters()">Apply Filters</button>
+            <button class="clear-filter-button" onclick="clearFilters()">Clear Filters</button>
+            <button class="download-button" onclick="downloadTableAsExcel()">
+                <i class="fas fa-file-excel"></i> Export
+            </button>
+        </div>
+
+        <table class="audit-table" id="auditTable">
+            <thead>
+                <tr>
+                    <th class="filter-arrow" onclick="toggleFilterOrSort(this, 0)">Username</th>
+                    <th class="filter-arrow" onclick="toggleFilterOrSort(this, 1)">Action</th>
+                    <th class="filter-arrow" onclick="toggleFilterOrSort(this, 2)">Action Description</th>
+                    <th class="filter-arrow" onclick="toggleFilterOrSort(this, 3)">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.action_description }}</td>
+                    <td>{{ log.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const filters = Array(4).fill().map(() => new Set());
+        let sortColumn = null;
+        let sortDirection = 'asc';
+
+        function toggleFilterOrSort(header, columnIndex) {
+            const existingDropdown = header.querySelector(".filter-dropdown");
+            const existingSortOptions = header.querySelector(".sort-options");
+
+            // Close any open dropdowns or sort options in other headers
+            document.querySelectorAll(".filter-dropdown, .sort-options").forEach(element => {
+                if (element !== existingDropdown && element !== existingSortOptions) {
+                    element.style.display = "none";
+                }
+            });
+
+            // Toggle between filter and sort based on click
+            if (!existingDropdown || existingDropdown.style.display === "none") {
+                showFilterDropdown(header, columnIndex);
+            } else {
+                showSortOptions(header, columnIndex);
+            }
+        }
+
+        // Add this function to your existing JavaScript
+        function downloadTableAsExcel() {
+            const table = document.getElementById("auditTable");
+            const rows = table.querySelectorAll("tr");
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Add enterprise info as header
+            const enterpriseName = document.querySelector('.enterprise-name').textContent;
+            csvContent += `"${enterpriseName}"\n`;
+            csvContent += `"Exported on: ${new Date().toLocaleString()}"\n\n`;
+
+            // Add table headers
+            const headerRow = rows[0].querySelectorAll("th");
+            const headerData = Array.from(headerRow).map(cell => 
+                `"${cell.innerText.replace(" ▼", "").replace(/"/g, '""')}"`
+            );
+            csvContent += headerData.join(",") + "\n";
+
+            // Add table data (only visible rows)
+            const tbodyRows = table.querySelectorAll("tbody tr");
+            tbodyRows.forEach(row => {
+                if (row.style.display !== "none") {
+                    const rowData = [];
+                    row.querySelectorAll("td").forEach(cell => {
+                        rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
+                    });
+                    csvContent += rowData.join(",") + "\n";
+                }
+            });
+
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${enterpriseName.replace(/\s+/g, '_')}_audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showFilterDropdown(header, columnIndex) {
+            let dropdown = header.querySelector(".filter-dropdown");
+            const sortOptions = header.querySelector(".sort-options");
+            if (sortOptions) sortOptions.style.display = "none";
+
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+                return;
+            }
+
+            dropdown = document.createElement("div");
+            dropdown.className = "filter-dropdown";
+            header.appendChild(dropdown);
+
+            const table = document.getElementById("auditTable");
+            const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+            const uniqueValues = new Set();
+            for (let row of rows) {
+                const cell = row.getElementsByTagName("td")[columnIndex];
+                if (cell) {
+                    uniqueValues.add(cell.innerText.trim());
+                }
+            }
+
+            // Add Select All checkbox
+            const selectAllLabel = document.createElement("label");
+            const selectAllCheckbox = document.createElement("input");
+            selectAllCheckbox.type = "checkbox";
+            selectAllCheckbox.dataset.column = columnIndex;
+            selectAllCheckbox.dataset.selectAll = "true";
+            selectAllCheckbox.checked = filters[columnIndex].size === 0;
+            selectAllLabel.appendChild(selectAllCheckbox);
+            selectAllLabel.appendChild(document.createTextNode("Select All"));
+            dropdown.appendChild(selectAllLabel);
+
+            // Sort unique values in ascending order
+            const sortedValues = Array.from(uniqueValues).sort((a, b) => {
+                // Handle Timestamp (parse as date)
+                if (columnIndex === 3) {
+                    const parseDate = text => {
+                        if (!text) return new Date(0);
+                        return new Date(text);
+                    };
+                    return parseDate(a) - parseDate(b);
+                }
+                // Handle text columns (Username, Action, Action Description)
+                return a.localeCompare(b);
+            });
+
+            sortedValues.forEach(value => {
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = value;
+                checkbox.dataset.column = columnIndex;
+                checkbox.checked = filters[columnIndex].size === 0 || filters[columnIndex].has(value);
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(value));
+                dropdown.appendChild(label);
+            });
+
+            // Handle Select All logic
+            selectAllCheckbox.addEventListener("change", function() {
+                const checkboxes = dropdown.querySelectorAll("input[type='checkbox']:not([data-select-all])");
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+
+            // Handle individual checkbox changes
+            dropdown.addEventListener("change", function(event) {
+                if (event.target.type === "checkbox" && !event.target.dataset.selectAll) {
+                    const selectAll = dropdown.querySelector("input[data-select-all]");
+                    const checkboxes = dropdown.querySelectorAll("input[type='checkbox']:not([data-select-all])");
+                    selectAll.checked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+                }
+            });
+
+            dropdown.style.display = "block";
+
+            // Keep dropdown open on checkbox clicks
+            dropdown.addEventListener("click", function(event) {
+                event.stopPropagation();
+            });
+        }
+
+        function showSortOptions(header, columnIndex) {
+            let sortOptions = header.querySelector(".sort-options");
+            const filterDropdown = header.querySelector(".filter-dropdown");
+            if (filterDropdown) filterDropdown.style.display = "none";
+
+            if (sortOptions) {
+                sortOptions.style.display = sortOptions.style.display === "block" ? "none" : "block";
+                return;
+            }
+
+            sortOptions = document.createElement("div");
+            sortOptions.className = "sort-options";
+            header.appendChild(sortOptions);
+
+            const ascButton = document.createElement("button");
+            ascButton.textContent = "Sort Ascending";
+            ascButton.onclick = () => sortTable(columnIndex, 'asc');
+
+            const descButton = document.createElement("button");
+            descButton.textContent = "Sort Descending";
+            descButton.onclick = () => sortTable(columnIndex, 'desc');
+
+            sortOptions.appendChild(ascButton);
+            sortOptions.appendChild(descButton);
+
+            sortOptions.style.display = "block";
+
+            sortOptions.addEventListener("click", function(event) {
+                event.stopPropagation();
+            });
+        }
+
+        function sortTable(columnIndex, direction) {
+            const table = document.getElementById("auditTable");
+            const tbody = table.getElementsByTagName("tbody")[0];
+            const rows = Array.from(tbody.getElementsByTagName("tr"));
+
+            sortColumn = columnIndex;
+            sortDirection = direction;
+
+            rows.sort((a, b) => {
+                let aText = a.getElementsByTagName("td")[columnIndex].innerText.trim();
+                let bText = b.getElementsByTagName("td")[columnIndex].innerText.trim();
+
+                // Handle Timestamp (parse as date)
+                if (columnIndex === 3) {
+                    const parseDate = text => {
+                        if (!text) return new Date(0);
+                        return new Date(text);
+                    };
+                    aText = parseDate(aText);
+                    bText = parseDate(bText);
+                }
+
+                if (aText < bText) return direction === 'asc' ? -1 : 1;
+                if (aText > bText) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Close sort options
+            document.querySelectorAll(".sort-options").forEach(element => {
+                element.style.display = "none";
+            });
+        }
+
+        function applyFilters() {
+            const table = document.getElementById("auditTable");
+            const dropdowns = table.getElementsByClassName("filter-dropdown");
+
+            filters.forEach(filter => filter.clear());
+
+            for (let dropdown of dropdowns) {
+                const checkboxes = dropdown.getElementsByTagName("input");
+                const columnIndex = checkboxes[0]?.dataset.column;
+                if (columnIndex !== undefined) {
+                    for (let checkbox of checkboxes) {
+                        if (checkbox.checked && !checkbox.dataset.selectAll) {
+                            filters[columnIndex].add(checkbox.value);
+                        }
+                    }
+                }
+            }
+
+            const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+            for (let row of rows) {
+                const cells = row.getElementsByTagName("td");
+                let rowVisible = true;
+
+                for (let i = 0; i < filters.length; i++) {
+                    const filter = filters[i];
+                    if (filter.size > 0 && cells[i]) {
+                        const cellText = cells[i].innerText.trim();
+                        if (!filter.has(cellText)) {
+                            rowVisible = false;
+                            break;
+                        }
+                    }
+                }
+
+                row.style.display = rowVisible ? "" : "none";
+            }
+        }
+
+        function clearFilters() {
+            const table = document.getElementById("auditTable");
+            const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+            for (let row of rows) {
+                row.style.display = "";
+            }
+            const dropdowns = table.getElementsByClassName("filter-dropdown");
+            for (let dropdown of dropdowns) {
+                const checkboxes = dropdown.getElementsByTagName("input");
+                for (let checkbox of checkboxes) {
+                    checkbox.checked = true;
+                }
+            }
+            filters.forEach(filter => filter.clear());
+        }
+
+        function downloadTableAsExcel() {
+            const table = document.getElementById("auditTable");
+            const rows = table.querySelectorAll("tr");
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            const headerRow = rows[0].querySelectorAll("th");
+            const headerData = Array.from(headerRow).map(cell => `"${cell.innerText.replace(" ▼", "").replace(/"/g, '""')}"`);
+            csvContent += headerData.join(",") + "\n";
+
+            const tbodyRows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+            for (let row of tbodyRows) {
+                if (row.style.display !== "none") { // Only include visible rows
+                    const rowData = [];
+                    row.querySelectorAll("td").forEach(cell => {
+                        const text = cell.innerText.replace(/"/g, '""');
+                        rowData.push(`"${text}"`);
+                    });
+                    csvContent += rowData.join(",") + "\n";
+                }
+            }
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "audit_logs_filtered.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Close dropdowns on click outside
+            document.addEventListener("click", function(event) {
+                if (!event.target.closest(".filter-dropdown") && !event.target.closest(".sort-options") && !event.target.closest("th")) {
+                    document.querySelectorAll(".filter-dropdown, .sort-options").forEach(element => {
+                        element.style.display = "none";
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

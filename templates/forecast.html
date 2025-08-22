@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBWhiz - Forecasting</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
+    <!-- Chart.js with plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f7fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #3a5ca8;
+            margin: 0;
+        }
+        .back-button {
+            background: #3a5ca8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .forecast-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #3a5ca8;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        select, input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #3a5ca8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #2d4a8c;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+            position: relative;
+        }
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .chart-controls button {
+            margin-top: 0;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .chart-controls select {
+            width: auto;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .chart-controls input[type="range"] {
+            width: 200px;
+            margin: 0 10px;
+        }
+        .chart-controls label {
+            font-size: 14px;
+            color: #3a5ca8;
+            margin-bottom: 0;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3a5ca8;
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .results-header h3 {
+            margin: 0;
+            color: #3a5ca8;
+        }
+        #forecastValues {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .model-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 5px;
+        }
+        .export-button {
+            background: white;
+            color: #3a5ca8;
+            border: 1px solid #3a5ca8;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .export-button:hover {
+            background: #f0f5ff;
+            transform: translateY(-2px);
+        }
+        .export-button:active {
+            transform: translateY(0);
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #d32f2f;
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 4px;
+        }
+        .zoom-instructions {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Forecasting</h1>
+            <div>
+                <button class="export-button" id="exportButton" title="Export Forecast">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15V3M12 15L8 11M12 15L16 11M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="#3a5ca8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Export PDF
+                </button>
+                <button class="back-button" id="backButton">Back to Chat</button>
+            </div>
+        </div>
+
+        <div class="forecast-section">
+            <h2 class="section-title">Select Data for Forecasting</h2>
+            <div class="form-group">
+                <label for="databaseSelect">Database:</label>
+                <select id="databaseSelect">
+                    <option value="">Select a database</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tableSelect">Table:</label>
+                <select id="tableSelect" disabled>
+                    <option value="">Select a table</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="dateColumn">Date Column:</label>
+                <select id="dateColumn" disabled>
+                    <option value="">Select date column</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="valueColumn">Value Column:</label>
+                <select id="valueColumn" disabled>
+                    <option value="">Select value column</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="featureColumns">Additional Feature Columns (Optional):</label>
+                <select id="featureColumns" multiple disabled>
+                    <option value="">Select additional features</option>
+                </select>
+                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple columns</small>
+            </div>
+            <button id="loadDataButton" disabled>Load Data</button>
+            <div id="loadError" class="error-message" style="display: none;"></div>
+        </div>
+
+        <div class="forecast-section" id="forecastOptionsSection" style="display: none;">
+            <h2 class="section-title">Forecasting Options</h2>
+            <div class="form-group">
+                <label for="forecastPeriods">Forecast Periods:</label>
+                <input type="number" id="forecastPeriods" value="5" min="1" max="365">
+            </div>
+            <div class="form-group">
+                <label for="rowLimit">Number of Rows to Use:</label>
+                <select id="rowLimit">
+                    <option value="100">100 rows</option>
+                    <option value="500">500 rows</option>
+                    <option value="1000">1000 rows</option>
+                    <option value="0">All Rows</option> <!-- 0 will indicate all rows -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="modelSelect">Forecasting Model:</label>
+                <select id="modelSelect">
+                    <option value="auto">Auto Select (Recommended)</option>
+                    <option value="arima">ARIMA</option>
+                    <option value="random_forest">Random Forest</option>
+                </select>
+            </div>
+            <button id="runForecastButton">Run Forecast</button>
+            <div id="forecastError" class="error-message" style="display: none;"></div>
+        </div>
+
+        <div class="forecast-section" id="resultsSection" style="display: none;">
+            <h2 class="section-title">Forecast Results</h2>
+            <div class="model-info" id="modelInfo"></div>
+            
+            <div class="chart-controls">
+                <div class="chart-actions">
+                    <button id="resetZoomBtn">Reset View</button>
+                </div>
+                <div class="chart-actions">
+                    <label for="zoomSlider">Zoom Level (0-100%):</label>
+                    <input type="range" id="zoomSlider" min="0" max="100" value="0">
+                </div>
+                <div class="chart-actions">
+                    <label for="xSlider">Time Range:</label>
+                    <input type="range" id="xSlider" min="0" max="100" value="50">
+                </div>
+                <div class="chart-actions">
+                    <label for="ySlider">Value Range:</label>
+                    <input type="range" id="ySlider" min="0" max="100" value="50">
+                </div>
+                <select id="timePeriodSelect">
+                    <option value="day">Daily View</option>
+                    <option value="week">Weekly View</option>
+                    <option value="month">Monthly View</option>
+                    <option value="year">Yearly View</option>
+                </select>
+            </div>
+            <div class="zoom-instructions">
+                <p>• Use mouse wheel to zoom • Click and drag to pan • Use sliders to adjust zoom and view • Select time period above</p>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="forecastChart"></canvas>
+            </div>
+            <div class="results">
+                <div class="results-header">
+                    <h3>Forecast Values</h3>
+                    <button id="exportCsvButton" class="export-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 15V3M12 15L8 11M12 15L16 11M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="#3a5ca8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Export CSV
+                    </button>
+                </div>
+                <div id="forecastValues"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentData = null;
+        let forecastChart = null;
+        let currentUsername = null;
+        let currentForecastResult = null;
+        let xRange = { min: null, max: null }; // Store original x-axis range
+        let yRange = { min: null, max: null }; // Store original y-axis range
+        let zoomLevel = 1; // 1 = no zoom, <1 = zoomed in
+
+        // DOM elements
+        const databaseSelect = document.getElementById('databaseSelect');
+        const tableSelect = document.getElementById('tableSelect');
+        const dateColumn = document.getElementById('dateColumn');
+        const valueColumn = document.getElementById('valueColumn');
+        const featureColumns = document.getElementById('featureColumns');
+        const loadDataButton = document.getElementById('loadDataButton');
+        const forecastPeriods = document.getElementById('forecastPeriods');
+        const rowLimit = document.getElementById('rowLimit');
+        const modelSelect = document.getElementById('modelSelect');
+        const runForecastButton = document.getElementById('runForecastButton');
+        const modelInfo = document.getElementById('modelInfo');
+        const forecastValues = document.getElementById('forecastValues');
+        const backButton = document.getElementById('backButton');
+        const forecastOptionsSection = document.getElementById('forecastOptionsSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const loadError = document.getElementById('loadError');
+        const forecastError = document.getElementById('forecastError');
+        const exportButton = document.getElementById('exportButton');
+        const exportCsvButton = document.getElementById('exportCsvButton');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const xSlider = document.getElementById('xSlider');
+        const ySlider = document.getElementById('ySlider');
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load current user
+            try {
+                const userResponse = await fetch('/api/current-user');
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    currentUsername = userData.username;
+                }
+            } catch (error) {
+                console.error('Error loading user:', error);
+            }
+
+            // Load databases
+            await loadDatabases();
+
+            // Set up event listeners
+            databaseSelect.addEventListener('change', loadTables);
+            tableSelect.addEventListener('change', loadColumns);
+            dateColumn.addEventListener('change', updateLoadButtonState);
+            valueColumn.addEventListener('change', updateLoadButtonState);
+            loadDataButton.addEventListener('click', loadTableData);
+            runForecastButton.addEventListener('click', runForecast);
+            backButton.addEventListener('click', () => {
+                window.location.href = '/app';
+            });
+            exportButton.addEventListener('click', exportForecastToPDF);
+            exportCsvButton.addEventListener('click', exportForecastToCSV);
+        });
+
+        // Function to update Load Data button state
+        function updateLoadButtonState() {
+            const dateSelected = dateColumn.value !== '';
+            const valueSelected = valueColumn.value !== '';
+            loadDataButton.disabled = !(dateSelected && valueSelected);
+        }
+
+        // PDF Export Functionality
+        async function exportForecastToPDF() {
+            if (!document.getElementById('forecastValues').textContent) {
+                alert('No forecast results to export. Please run a forecast first.');
+                return;
+            }
+
+            const exportBtn = document.getElementById('exportButton');
+            try {
+                exportBtn.disabled = true;
+                exportBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="loading-spinner">
+                    <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.0784 19.0784L16.25 16.25M19.0784 4.99999L16.25 7.82843M4.92157 19.0784L7.75 16.25M4.92157 4.99999L7.75 7.82843" stroke="#3a5ca8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg> Exporting...`;
+
+                // Get all the data to export
+                const exportData = {
+                    database: databaseSelect.value,
+                    table: tableSelect.value,
+                    date_col: dateColumn.value,
+                    value_col: valueColumn.value,
+                    periods: forecastPeriods.value,
+                    row_limit: rowLimit.value,
+                    model: modelSelect.value,
+                    model_info: modelInfo.textContent,
+                    results: forecastValues.textContent
+                };
+
+                // Add chart image if available
+                const canvas = document.getElementById('forecastChart');
+                if (canvas) {
+                    exportData.chart_image = canvas.toDataURL('image/png');
+                }
+
+                // Call backend to generate PDF
+                const response = await fetch('/api/export-forecast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(exportData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+
+                // Create download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `forecast_report_${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+                alert('Export failed: ' + error.message);
+                console.error('Export error:', error);
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15V3M12 15L8 11M12 15L16 11M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="#3a5ca8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Export PDF
+                `;
+            }
+        }
+
+        // CSV Export Functionality
+        async function exportForecastToCSV() {
+            if (!currentForecastResult) {
+                alert('No forecast results to export. Please run a forecast first.');
+                return;
+            }
+
+            const exportBtn = document.getElementById('exportCsvButton');
+            try {
+                exportBtn.disabled = true;
+                exportBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="loading-spinner">
+                    <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.0784 19.0784L16.25 16.25M19.0784 4.99999L16.25 7.82843M4.92157 19.0784L7.75 16.25M4.92157 4.99999L7.75 7.82843" stroke="#3a5ca8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg> Exporting...`;
+
+                // Prepare data for CSV export
+                const csvData = {
+                    model: currentForecastResult.model,
+                    forecast: currentForecastResult.forecast,
+                    last_date: currentForecastResult.last_date,
+                    database: databaseSelect.value,
+                    table: tableSelect.value,
+                    date_col: dateColumn.value,
+                    value_col: valueColumn.value
+                };
+
+                // Call backend to generate CSV
+                const response = await fetch('/api/export-forecast-csv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(csvData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate CSV');
+                }
+
+                // Create download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `forecast_${databaseSelect.value}_${tableSelect.value}_${new Date().toISOString().slice(0,10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+                alert('CSV export failed: ' + error.message);
+                console.error('CSV export error:', error);
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15V3M12 15L8 11M12 15L16 11M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="#3a5ca8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Export CSV
+                `;
+            }
+        }
+
+        // Load available databases
+        async function loadDatabases() {
+            try {
+                const response = await fetch('/api/user-databases');
+                if (!response.ok) throw new Error('Failed to load databases');
+                
+                const data = await response.json();
+                databaseSelect.innerHTML = '<option value="">Select a database</option>';
+                
+                if (data.databases && data.databases.length > 0) {
+                    data.databases.forEach(db => {
+                        const option = document.createElement('option');
+                        option.value = db.name;
+                        option.textContent = `${db.name} (${db.type})`;
+                        option.dataset.dbType = db.type; // Store database type
+                        databaseSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading databases:', error);
+                showError(loadError, 'Error loading databases: ' + error.message);
+            }
+        }
+
+        // Load tables for selected database
+        async function loadTables() {
+            const selectedOption = databaseSelect.options[databaseSelect.selectedIndex];
+            const selectedDb = selectedOption.value;
+            const dbType = selectedOption.dataset.dbType;
+            
+            if (!selectedDb || !dbType) return;
+
+            try {
+                tableSelect.disabled = true;
+                dateColumn.disabled = true;
+                valueColumn.disabled = true;
+                featureColumns.disabled = true;
+                loadDataButton.disabled = true;
+                
+                const response = await fetch('/api/database-tables', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        database: selectedDb,
+                        type: dbType 
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to load tables');
+                
+                const data = await response.json();
+                tableSelect.innerHTML = '<option value="">Select a table</option>';
+                
+                if (data.tables && data.tables.length > 0) {
+                    data.tables.forEach(table => {
+                        const option = document.createElement('option');
+                        option.value = table;
+                        option.textContent = table;
+                        tableSelect.appendChild(option);
+                    });
+                    tableSelect.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error loading tables:', error);
+                showError(loadError, 'Error loading tables: ' + error.message);
+            }
+        }
+
+        // Load columns for selected table
+        async function loadColumns() {
+            const selectedDbOption = databaseSelect.options[databaseSelect.selectedIndex];
+            const selectedDb = selectedDbOption.value;
+            const dbType = selectedDbOption.dataset.dbType;
+            const selectedTable = tableSelect.value;
+            
+            if (!selectedDb || !selectedTable || !dbType) return;
+
+            try {
+                dateColumn.disabled = true;
+                valueColumn.disabled = true;
+                featureColumns.disabled = true;
+                loadDataButton.disabled = true;
+                
+                const response = await fetch('/api/table-preview10', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        database: selectedDb,
+                        table: selectedTable,
+                        type: dbType
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to load columns');
+                
+                const data = await response.json();
+                dateColumn.innerHTML = '<option value="">Select date column</option>';
+                valueColumn.innerHTML = '<option value="">Select value column</option>';
+                featureColumns.innerHTML = '<option value="">Select additional features</option>';
+                
+                if (data.columns && data.columns.length > 0) {
+                    data.columns.forEach(col => {
+                        const dateOption = document.createElement('option');
+                        dateOption.value = col;
+                        dateOption.textContent = col;
+                        dateColumn.appendChild(dateOption.cloneNode(true));
+                        
+                        const valueOption = dateOption.cloneNode(true);
+                        valueColumn.appendChild(valueOption);
+                        
+                        const featureOption = dateOption.cloneNode(true);
+                        featureColumns.appendChild(featureOption);
+                    });
+                    
+                    dateColumn.disabled = false;
+                    valueColumn.disabled = false;
+                    featureColumns.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error loading columns:', error);
+                showError(loadError, 'Error loading columns: ' + error.message);
+            }
+        }
+
+        // Load table data for forecasting
+        async function loadTableData() {
+            const selectedDbOption = databaseSelect.options[databaseSelect.selectedIndex];
+            const selectedDb = selectedDbOption.value;
+            const dbType = selectedDbOption.dataset.dbType;
+            const selectedTable = tableSelect.value;
+            const dateCol = dateColumn.value;
+            const valueCol = valueColumn.value;
+            const featureCols = Array.from(featureColumns.selectedOptions).map(opt => opt.value);
+            
+            if (!selectedDb || !selectedTable || !dateCol || !valueCol) {
+                showError(loadError, 'Please select all required fields');
+                return;
+            }
+
+            try {
+                loadDataButton.disabled = true;
+                loadDataButton.textContent = 'Loading...';
+                hideError(loadError);
+                
+                const response = await fetch('/api/table-preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        database: selectedDb,
+                        table: selectedTable,
+                        type: dbType,  // Make sure to send the database type
+                        order_by: dateCol,
+                        order_direction: 'DESC',
+                        limit: rowLimit.value !== '0' ? parseInt(rowLimit.value) || 1000 : undefined
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to load table data');
+                }
+                
+                const data = await response.json();
+                
+                currentData = {
+                    rows: data.rows,
+                    dateCol: dateCol,
+                    valueCol: valueCol,
+                    featureCols: featureCols,
+                    dbType: dbType
+                };
+                
+                forecastOptionsSection.style.display = 'block';
+                resultsSection.style.display = 'none';
+                if (forecastChart) {
+                    forecastChart.destroy();
+                    forecastChart = null;
+                }
+                
+            } catch (error) {
+                console.error('Error loading table data:', error);
+                showError(loadError, 'Error loading table data: ' + error.message);
+            } finally {
+                loadDataButton.disabled = false;
+                loadDataButton.textContent = 'Load Data';
+            }
+        }
+
+        // Run forecast with selected parameters
+        async function runForecast() {
+            if (!currentData) {
+                showError(forecastError, 'No data loaded for forecasting');
+                return;
+            }
+
+            try {
+                runForecastButton.disabled = true;
+                runForecastButton.textContent = 'Running Forecast...';
+                hideError(forecastError);
+                
+                const periods = parseInt(forecastPeriods.value) || 5;
+                const model = modelSelect.value;
+                const rowLimitValue = parseInt(rowLimit.value) || 0; // 0 means all rows
+                
+                // Get the database type from currentData
+                const dbType = currentData.dbType;
+                
+                const fullDataResponse = await fetch('/api/table-preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        database: databaseSelect.value,
+                        table: tableSelect.value,
+                        type: dbType,  // Include database type
+                        limit: rowLimitValue || undefined, // Send undefined for all rows
+                        order_by: currentData.dateCol,
+                        order_direction: 'DESC'
+                    })
+                });
+                
+                if (!fullDataResponse.ok) {
+                    const errorData = await fullDataResponse.json();
+                    throw new Error(errorData.error || 'Failed to load dataset');
+                }
+                
+                const fullData = await fullDataResponse.json();
+                const lastDate = fullData.rows.length > 0 ? 
+                    new Date(fullData.rows[0][currentData.dateCol]) : 
+                    new Date();
+                
+                const requestData = {
+                    data: fullData.rows,
+                    date_col: currentData.dateCol,
+                    value_col: currentData.valueCol,
+                    feature_cols: currentData.featureCols,
+                    periods: periods,
+                    model: model,
+                    row_limit: rowLimitValue || fullData.rows.length,
+                    last_date: lastDate.toISOString()
+                };
+                
+                const response = await fetch('/api/forecast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Forecasting failed');
+                }
+                
+                displayForecastResults(result);
+                
+            } catch (error) {
+                console.error('Error running forecast:', error);
+                showError(forecastError, 'Error running forecast: ' + error.message);
+            } finally {
+                runForecastButton.disabled = false;
+                runForecastButton.textContent = 'Run Forecast';
+            }
+        }
+
+        // Display forecast results
+        function displayForecastResults(result) {
+            currentForecastResult = result;
+            resultsSection.style.display = 'block';
+            
+            modelInfo.innerHTML = `
+                <h3>Model Information</h3>
+                <p><strong>Model Used:</strong> ${result.model}</p>
+                <p><strong>Rows Used:</strong> ${result.row_limit || currentData.rows.length}</p>
+                <p><strong>Last Historical Data Point:</strong> ${new Date(result.last_date).toLocaleDateString()}</p>
+                ${result.metrics ? `<p><strong>Model Metrics:</strong> ${JSON.stringify(result.metrics, null, 2)}</p>` : ''}
+            `;
+            
+            let resultsHtml = '<ul>';
+            
+            if (result.model === 'ARIMA') {
+                result.forecast.forEach((value, i) => {
+                    const forecastDate = new Date(result.last_date);
+                    forecastDate.setDate(forecastDate.getDate() + i + 1);
+                    resultsHtml += `<li>${forecastDate.toLocaleDateString()}: ${value.toFixed(2)}</li>`;
+                });
+            } else if (result.model === 'Prophet') {
+                result.forecast.forEach(item => {
+                    resultsHtml += `<li>${new Date(item.ds).toLocaleDateString()}: ${item.yhat.toFixed(2)} (range: ${item.yhat_lower.toFixed(2)} to ${item.yhat_upper.toFixed(2)})</li>`;
+                });
+            } else if (result.model === 'Random Forest') {
+                result.forecast.forEach(item => {
+                    resultsHtml += `<li>${new Date(item.date).toLocaleDateString()}: ${item.prediction.toFixed(2)}</li>`;
+                });
+            }
+            
+            resultsHtml += '</ul>';
+            forecastValues.innerHTML = resultsHtml;
+            
+            createForecastChart(result);
+        }
+
+        // Create interactive forecast chart
+        function createForecastChart(result) {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            if (forecastChart) {
+                forecastChart.destroy();
+            }
+            
+            const historicalData = currentData.rows
+                .slice(0, result.row_limit || currentData.rows.length)
+                .map(row => ({
+                    date: new Date(row[currentData.dateCol]),
+                    value: parseFloat(row[currentData.valueCol])
+                }));
+            
+            historicalData.sort((a, b) => a.date - b.date);
+            
+            const lastHistoricalDate = historicalData.length > 0 ? 
+                historicalData[historicalData.length - 1].date : 
+                new Date();
+            
+            let forecastData = [];
+            
+            if (result.model === 'ARIMA') {
+                forecastData = result.forecast.map((value, i) => ({
+                    date: new Date(lastHistoricalDate.getTime() + (i + 1) * 24 * 60 * 60 * 1000),
+                    value: value,
+                    lower: result.metrics.conf_int ? result.metrics.conf_int[i][0] : undefined,
+                    upper: result.metrics.conf_int ? result.metrics.conf_int[i][1] : undefined
+                }));
+            } else if (result.model === 'Prophet') {
+                forecastData = result.forecast.map((item, i) => ({
+                    date: new Date(lastHistoricalDate.getTime() + (i + 1) * 24 * 60 * 60 * 1000),
+                    value: item.yhat,
+                    lower: item.yhat_lower,
+                    upper: item.yhat_upper
+                }));
+            } else if (result.model === 'Random Forest') {
+                forecastData = result.forecast.map((item, i) => ({
+                    date: new Date(lastHistoricalDate.getTime() + (i + 1) * 24 * 60 * 60 * 1000),
+                    value: item.prediction
+                }));
+            }
+            
+            // Calculate initial axis ranges
+            const allDates = historicalData.map(d => d.date.getTime()).concat(forecastData.map(d => d.date.getTime()));
+            const allValues = historicalData.map(d => d.value).concat(forecastData.map(d => d.value));
+            xRange.min = Math.min(...allDates);
+            xRange.max = Math.max(...allDates);
+            yRange.min = Math.min(...allValues);
+            yRange.max = Math.max(...allValues);
+            const yPadding = (yRange.max - yRange.min) * 0.1; // Add 10% padding
+            yRange.min -= yPadding;
+            yRange.max += yPadding;
+
+            // Reset zoom and sliders
+            zoomLevel = 1;
+            zoomSlider.value = 0;
+            xSlider.value = 50;
+            ySlider.value = 50;
+
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: historicalData.map(item => ({
+                                x: item.date,
+                                y: item.value
+                            })),
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10
+                        },
+                        {
+                            label: 'Forecast',
+                            data: forecastData.map(item => ({
+                                x: item.date,
+                                y: item.value
+                            })),
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: document.getElementById('timePeriodSelect').value,
+                                tooltipFormat: 'MMM d, yyyy',
+                                displayFormats: {
+                                    day: 'MMM d',
+                                    week: 'MMM d',
+                                    month: 'MMM yyyy',
+                                    year: 'yyyy'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            min: xRange.min,
+                            max: xRange.max
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: currentData.valueCol,
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            min: yRange.min,
+                            max: yRange.max
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
+                                },
+                                title: function(context) {
+                                    return new Date(context[0].parsed.x).toLocaleDateString();
+                                }
+                            }
+                        },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                                threshold: 10
+                            },
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                    speed: 0.1
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy',
+                                onZoomComplete: ({ chart }) => {
+                                    // Update zoom level based on current visible range
+                                    const xScale = chart.scales.x;
+                                    const yScale = chart.scales.y;
+                                    const currentXRange = (xRange.max - xRange.min) / (xScale.max - xScale.min);
+                                    const currentYRange = (yRange.max - yRange.min) / (yScale.max - yScale.min);
+                                    zoomLevel = Math.max(currentXRange, currentYRange);
+                                    zoomSlider.value = ((zoomLevel - 1) / 9) * 100; // Map 1x to 10x to 0-100
+                                    chart.update('none');
+                                }
+                            },
+                            limits: {
+                                x: { min: 'original', max: 'original' },
+                                y: { min: 'original', max: 'original' }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'xy',
+                        intersect: false
+                    }
+                }
+            });
+            
+            if ((result.model === 'Prophet' || result.model === 'ARIMA') && 
+                forecastData.length > 0 && forecastData[0].lower !== undefined) {
+                
+                forecastChart.data.datasets.push({
+                    label: 'Confidence Interval',
+                    data: forecastData.map(item => ({
+                        x: item.date,
+                        y: item.upper
+                    })),
+                    borderColor: 'rgba(255, 99, 132, 0.3)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    borderWidth: 1,
+                    fill: '-1',
+                    pointRadius: 0
+                });
+                
+                forecastChart.data.datasets.push({
+                    label: 'Confidence Interval',
+                    data: forecastData.map(item => ({
+                        x: item.date,
+                        y: item.lower
+                    })),
+                    borderColor: 'rgba(255, 99, 132, 0.3)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    borderWidth: 1,
+                    pointRadius: 0
+                });
+            }
+            
+            setupChartControls();
+            updateSliders(); // Initialize sliders
+            
+            forecastChart.update();
+        }
+
+        // Set up chart control event listeners
+        function setupChartControls() {
+            // Reset button
+            document.getElementById('resetZoomBtn').addEventListener('click', () => {
+                zoomLevel = 1;
+                zoomSlider.value = 0;
+                xSlider.value = 50;
+                ySlider.value = 50;
+                updateSliders();
+                forecastChart.resetZoom();
+            });
+            
+            // Time period selection
+            document.getElementById('timePeriodSelect').addEventListener('change', (e) => {
+                forecastChart.options.scales.x.time.unit = e.target.value;
+                forecastChart.update();
+            });
+            
+            // Slider controls
+            zoomSlider.addEventListener('input', updateSliders);
+            xSlider.addEventListener('input', updateSliders);
+            ySlider.addEventListener('input', updateSliders);
+        }
+
+        // Update chart based on slider positions
+        function updateSliders() {
+            if (!forecastChart) return;
+
+            const zoomValue = parseInt(zoomSlider.value);
+            const xValue = parseInt(xSlider.value);
+            const yValue = parseInt(ySlider.value);
+
+            // Calculate zoom level: 0% = 1x (full view), 100% = 10x
+            zoomLevel = 1 + (zoomValue / 100) * 9; // Linearly map 0-100 to 1x-10x
+            const xRangeWidth = (xRange.max - xRange.min) / zoomLevel;
+            const yRangeWidth = (yRange.max - yRange.min) / zoomLevel;
+
+            // Calculate x-axis range (time)
+            const xCenter = xRange.min + (xRange.max - xRange.min) * (xValue / 100);
+            const xMin = xCenter - xRangeWidth / 2;
+            const xMax = xCenter + xRangeWidth / 2;
+
+            // Calculate y-axis range (values)
+            const yCenter = yRange.min + (yRange.max - yRange.min) * (yValue / 100);
+            const yMin = yCenter - yRangeWidth / 2;
+            const yMax = yCenter + yRangeWidth / 2;
+
+            // Update chart scales
+            forecastChart.options.scales.x.min = xMin;
+            forecastChart.options.scales.x.max = xMax;
+            forecastChart.options.scales.y.min = yMin;
+            forecastChart.options.scales.y.max = yMax;
+            forecastChart.update('none');
+        }
+
+        // Helper functions for error handling
+        function showError(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        function hideError(element) {
+            element.textContent = '';
+            element.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

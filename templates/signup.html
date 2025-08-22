@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4da8da;
+            --secondary-color: #232222;
+            --accent-color: #6bb9e6;
+            --background-color: #f9fafb;
+            --text-color: #333333;
+            --success-color: #3c763d;
+            --error-color: #a94442;
+            --info-color: #31708f;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--secondary-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            color: white;
+            height: 60px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .logo-left {
+            position: absolute;
+            left: 1.5rem;
+            width: 120px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        /* New DBWHIZ logo */
+        .navbar-logo {
+            position: absolute;
+            left: 10%;
+            transform: translateX(-50%);
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4da8da, #fbb034);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            letter-spacing: 2px;
+        }
+
+        /* Buttons */
+        .navbar-buttons {
+            display: flex;
+            gap: 0.5rem;
+            position: absolute;
+            right: 1.5rem;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, #ffb977 0%, #f78c6b 100%);
+            transform: translateY(-2px);
+        }
+
+        /* Active nav button */
+        .nav-button.active {
+            background: linear-gradient(135deg, #f38b4a, #ff8c66);
+            border: 2px solid #ffad5a;
+            color: white;
+            font-weight: 600;
+        }
+
+        .nav-button.active:hover {
+            background: linear-gradient(135deg, #df783a, #f67950);
+        }
+
+        .nav-button i {
+            font-size: 0.9rem;
+        }
+
+        .signup-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 360px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-in;
+            margin: auto;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .signup-container h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .signup-form {
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .signup-form label {
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: left;
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .signup-form input[type="text"],
+        .signup-form input[type="password"] {
+            width: 80%;
+            padding: 0.9rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text-color);
+            transition: border-color 0.3s;
+        }
+
+        .signup-form input[type="text"]:focus,
+        .signup-form input[type="password"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(77, 168, 218, 0.1);
+        }
+
+        .signup-form .access-list {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            background-color: #fafafa;
+        }
+
+        .signup-form .access-list label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .signup-form input[type="checkbox"] {
+            margin-right: 0.5rem;
+            accent-color: var(--primary-color);
+            width: 16px;
+            height: 16px;
+        }
+
+        .signup-form input[type="submit"] {
+            width: 80%;
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .signup-form input[type="submit"]:hover {
+            background: linear-gradient(to right, #3c94c4, #5aa5d2);
+            transform: translateY(-2px);
+        }
+
+        .signup-form .login-link {
+            font-size: 0.9rem;
+            margin-top: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .signup-form .login-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .signup-form .login-link a:hover {
+            color: #3c94c4;
+        }
+
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .flash-messages ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .flash-messages li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .flash-messages .success {
+            background-color: #e6f4e8;
+            color: var(--success-color);
+        }
+
+        .flash-messages .error {
+            background-color: #fee2e2;
+            color: var(--error-color);
+        }
+
+        .flash-messages .info {
+            background-color: #e5f3fb;
+            color: var(--info-color);
+        }
+
+        .success-message {
+            background-color: #e6f4e8;
+            color: var(--success-color);
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-logo">DBWHIZ</div>
+        <div class="navbar-buttons">
+            <a href="/admin_console" class="nav-button"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/configuration" class="nav-button"><i class="fas fa-cog"></i> Configuration</a>
+            <a href="/audit_page" class="nav-button"><i class="fas fa-clipboard-list"></i> Audit</a>
+            <a href="/signup" class="nav-button active"><i class="fas fa-user-plus"></i> Add User</a>
+            <a href="/logout" class="nav-button"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="signup-container">
+        <h1>Add New User</h1>
+        {% if success_message %}
+            <div class="success-message">{{ success_message }}</div>
+        {% endif %}
+        <div class="flash-messages">
+            {% if message %}
+                <ul>
+                    <li class="error">{{ message }}</li>
+                </ul>
+            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+        <form class="signup-form" action="/signup" method="post">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Enter username" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required>
+            <label>Database Access</label>
+            <div class="access-list">
+                {% for db in databases %}
+                    <label>
+                        <input type="checkbox" name="access" value='{"name":"{{ db.name }}","type":"{{ db.type }}"}'>
+                        {{ db.name }} ({{ db.type|upper }})
+                    </label>
+                {% endfor %}
+            </div>
+            <input type="submit" value="Create User">
+            <div class="login-link">
+                Go back to login page <a href="/login">Login</a>
+            </div>
+        </form>
+    </div>
+    <script>
+    document.querySelector('.signup-form').addEventListener('submit', function(e) {
+        const checked = document.querySelectorAll('input[name="access"]:checked');
+        if (checked.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one database.');
+        }
+    });
+    </script>
+</body>
+</html>

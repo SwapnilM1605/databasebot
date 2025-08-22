@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Configuration</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4da8da;
+            --secondary-color: #232222;
+            --accent-color: #7b8ff0;
+            --background-color: #f9fafb;
+            --text-color: #333333;
+            --success-color: #059669;
+            --error-color: #dc2626;
+            --info-color: #3a5ca8;
+            --border-color: rgba(255, 255, 255, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--secondary-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            color: white;
+            height: 60px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .navbar-logo {
+            position: absolute;
+            left: 10%;
+            transform: translateX(-50%);
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4da8da, #fbb034);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            letter-spacing: 2px;
+        }
+
+        .navbar-buttons {
+            display: flex;
+            gap: 0.5rem;
+            position: absolute;
+            right: 1.5rem;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, #ffb977 0%, #f78c6b 100%);
+            transform: translateY(-2px);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(135deg, #f38b4a, #ff8c66);
+            border: 2px solid #ffad5a;
+            color: white;
+            font-weight: 600;
+        }
+
+        .config-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 
+                        0 0 0 1px rgba(255, 255, 255, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-in;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+        .config-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 20px;
+            z-index: -1;
+        }
+
+        .config-container h1 {
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: var(--text-color);
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-container {
+            display: flex;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6b7280;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(123, 143, 240, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .tab img {
+            height: 44px;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .tab:hover img {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+
+        .tab:hover::after {
+            content: attr(data-tooltip);
+            display: block;
+            font-size: 0.8rem;
+            color: #4da8da;
+            margin-top: 5px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 92%;
+            padding: 12px 14px;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-group input:focus {
+            border-color: #3a5ca8;
+            box-shadow: 0 0 0 3px rgba(58, 92, 168, 0.15);
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .test-connection-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-color);
+            border: 1.5px solid #ccc;
+            padding: 12px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .test-connection-btn:hover {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(123, 143, 240, 0.4);
+        }
+
+        .config-form input[type="submit"] {
+            width: 100%;
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            color: #fff;
+            padding: 14px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(123, 143, 240, 0.4);
+        }
+
+        .config-form input[type="submit"]:hover {
+            background: linear-gradient(135deg, #6b7fe6 0%, #7a4fa8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(123, 143, 240, 0.5);
+        }
+
+        .database-list {
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #ccc;
+            border-radius: 12px;
+            margin-bottom: 1.2rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .database-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .database-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        .database-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #7b8ff0 0%, #8a5fb8 100%);
+            border-radius: 3px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .checkbox-row:hover {
+            background: rgba(123, 143, 240, 0.1);
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .checkbox-row label {
+            font-size: 0.95rem;
+            color: var(--text-color);
+            cursor: pointer;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .helper-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .flash-messages ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .flash-messages li {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .flash-messages .success {
+            background-color: rgba(209, 250, 229, 0.9);
+            color: var(--success-color);
+            border: 1px solid rgba(167, 243, 208, 0.8);
+        }
+
+        .flash-messages .error {
+            background-color: rgba(254, 226, 226, 0.9);
+            color: var(--error-color);
+            border: 1px solid rgba(252, 165, 165, 0.8);
+        }
+
+        .flash-messages .info {
+            background-color: rgba(229, 243, 251, 0.9);
+            color: var(--info-color);
+            border: 1px solid rgba(147, 197, 253, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            .navbar-logo {
+                left: 20px;
+                transform: none;
+                font-size: 1.5rem;
+            }
+            
+            .navbar-buttons {
+                right: 1rem;
+                gap: 0.3rem;
+            }
+            
+            .nav-button {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .config-container {
+                margin: 1rem;
+                padding: 2rem;
+                width: auto;
+            }
+        }
+    </style>
+    <script>
+        function switchTab(tabId, event) {
+            // Remove active class from all tabs and tab contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function testConnection() {
+            const button = document.querySelector('.test-connection-btn');
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing Connection...';
+            button.disabled = true;
+            
+            // Simulate connection test (replace with actual AJAX call)
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                // Add your actual connection test logic here
+            }, 2000);
+        }
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-logo">DBWHIZ</div>
+        <div class="navbar-buttons">
+            <a href="/admin_console" class="nav-button"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/configuration" class="nav-button active"><i class="fas fa-cog"></i> Configuration</a>
+            <a href="/audit_page" class="nav-button"><i class="fas fa-clipboard-list"></i> Audit</a>
+            <a href="/signup" class="nav-button"><i class="fas fa-user-plus"></i> Add User</a>
+            <a href="/logout" class="nav-button"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="config-container">
+        <h1>Configuration for {{ enterprise.name }}</h1>
+    
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('shared-databases', event)">
+                Shared Databases
+            </div>
+            <div class="tab" onclick="switchTab('mysql-config', event)" title="MySQL" data-tooltip="MySQL">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" alt="MySQL Logo">
+            </div>
+            <div class="tab" onclick="switchTab('postgres-config', event)" title="PostgreSQL" data-tooltip="PostgreSQL">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL Logo">
+            </div>
+            <div class="tab" onclick="switchTab('sqlserver-config', event)" title="SQL Server" data-tooltip="SQL Server">
+                <img src="https://img.icons8.com/color/48/000000/microsoft-sql-server.png" alt="SQL Server Logo">
+            </div>
+        </div>
+
+        <div id="shared-databases" class="tab-content active">
+            <form id="shared-databases-form" action="/configuration" method="post">
+                <input type="hidden" name="form_type" value="shared_databases">
+                <label for="shared_databases">Select Databases to Share with Users:</label>
+                <div class="database-list" id="shared_databases_list">
+                    {% for database in databases %}
+                        {% if database.name and database.type %}
+                        <div class="database-item">
+                            <input type="checkbox" class="database-checkbox" 
+                                   id="db_{{ loop.index }}" name="shared_databases" 
+                                   value='{{ {"name": database.name, "type": database.type} | tojson | safe }}'
+                                   {% if {'name': database.name, 'type': database.type} in shared_databases %}checked{% endif %}>
+                            <div class="database-info">
+                                <div class="database-name">{{ database.name }}</div>
+                                <div class="database-meta">
+                                    <span class="database-type {{ database.type }}-type">
+                                        <i class="fas fa-{{ 'database' if database.type == 'mysql' else 'server' if database.type == 'postgres' else 'cube' }}"></i>
+                                        {{ database.type|upper }}
+                                    </span>
+                                    <span class="database-size">
+                                        {% if database.size %}
+                                        {{ database.size }} MB
+                                        {% else %}
+                                        Size unknown
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="helper-text">
+                    <i class="fas fa-info-circle"></i> Select databases that will be available for user access during signup.
+                    MySQL databases are marked in blue, PostgreSQL in dark blue, SQL Server in green.
+                </div>
+                <input type="submit" value="Save Shared Databases">
+            </form>
+        </div>
+
+        <div id="mysql-config" class="tab-content">
+            <form class="config-form" id="mysql-config-form">
+                <input type="hidden" name="form_type" value="mysql_config">
+                <div class="form-group">
+                    <label for="mysql_host">MySQL Host</label>
+                    <input type="text" id="mysql_host" name="mysql_host" placeholder="localhost" required>
+                </div>
+                <div class="form-group">
+                    <label for="mysql_port">MySQL Port</label>
+                    <input type="number" id="mysql_port" name="mysql_port" placeholder="3306" required>
+                </div>
+                <div class="form-group">
+                    <label for="mysql_user">MySQL Admin Username</label>
+                    <input type="text" id="mysql_user" name="mysql_user" placeholder="root" required>
+                </div>
+                <div class="form-group">
+                    <label for="mysql_password">MySQL Admin Password</label>
+                    <input type="password" id="mysql_password" name="mysql_password" required>
+                </div>
+                <button type="button" class="test-connection-btn" onclick="testConnection()">
+                    <i class="fas fa-plug"></i> Test Connection
+                </button>
+                <input type="submit" value="Save MySQL Configuration">
+            </form>
+        </div>
+        <div id="postgres-config" class="tab-content">
+            <form class="config-form" id="postgres-config-form">
+                <input type="hidden" name="form_type" value="postgres_config">
+                <div class="form-group">
+                    <label for="postgres_host">PostgreSQL Host</label>
+                    <input type="text" id="postgres_host" name="postgres_host" placeholder="localhost" required>
+                </div>
+                <div class="form-group">
+                    <label for="postgres_port">PostgreSQL Port</label>
+                    <input type="number" id="postgres_port" name="postgres_port" placeholder="5432" required>
+                </div>
+                <div class="form-group">
+                    <label for="postgres_user">PostgreSQL Admin Username</label>
+                    <input type="text" id="postgres_user" name="postgres_user" placeholder="postgres" required>
+                </div>
+                <div class="form-group">
+                    <label for="postgres_password">PostgreSQL Admin Password</label>
+                    <input type="password" id="postgres_password" name="postgres_password" required>
+                </div>
+                <button type="button" class="test-connection-btn" onclick="testPostgresConnection()">
+                    <i class="fas fa-plug"></i> Test Connection
+                </button>
+                <input type="submit" value="Save PostgreSQL Configuration">
+            </form>
+        </div>
+        <div id="sqlserver-config" class="tab-content">
+        <form class="config-form" id="sqlserver-config-form">
+            <input type="hidden" name="form_type" value="sqlserver_config">
+            <div class="form-group">
+                <label for="sqlserver_host">SQL Server Host</label>
+                <input type="text" id="sqlserver_host" name="sqlserver_host" placeholder="localhost" required>
+            </div>
+            <div class="form-group">
+                <label for="sqlserver_instance">SQL Server Instance Name (optional)</label>
+                <input type="text" id="sqlserver_instance" name="sqlserver_instance" placeholder="MSSQLSERVER (leave blank for default)">
+            </div>
+            <div class="form-group">
+                <label for="sqlserver_port">SQL Server Port (if no instance name)</label>
+                <input type="number" id="sqlserver_port" name="sqlserver_port" placeholder="1433">
+            </div>
+            <div class="form-group">
+                <label for="sqlserver_user">SQL Server Admin Username</label>
+                <input type="text" id="sqlserver_user" name="sqlserver_user" placeholder="sa" required>
+            </div>
+            <div class="form-group">
+                <label for="sqlserver_password">SQL Server Admin Password</label>
+                <input type="password" id="sqlserver_password" name="sqlserver_password" required>
+            </div>
+            <button type="button" class="test-connection-btn" onclick="testSqlServerConnection()">
+                <i class="fas fa-plug"></i> Test Connection
+            </button>
+            <input type="submit" value="Save SQL Server Configuration">
+        </form>
+    </div>
+    </div>
+
+    <script>
+        // Store shared databases from server-side rendering
+        const sharedDatabasesFromServer = JSON.parse('{{ shared_databases | tojson | safe }}');
+
+        function switchTab(tabId, event) {
+            if (event) event.preventDefault();
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            if (event) {
+                event.currentTarget.classList.add('active');
+            } else {
+                document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+            }
+        }
+
+        function testConnection() {
+            const formData = {
+                host: document.getElementById('mysql_host').value,
+                port: document.getElementById('mysql_port').value,
+                user: document.getElementById('mysql_user').value,
+                password: document.getElementById('mysql_password').value
+            };
+
+            fetch('/api/test-mysql-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ MySQL connection successful!');
+                } else {
+                    alert('❌ MySQL connection failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error testing MySQL connection: ' + error);
+            });
+        }
+
+        function testPostgresConnection() {
+            const formData = {
+                host: document.getElementById('postgres_host').value,
+                port: document.getElementById('postgres_port').value,
+                user: document.getElementById('postgres_user').value,
+                password: document.getElementById('postgres_password').value
+            };
+
+            fetch('/api/test-postgres-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ PostgreSQL connection successful!');
+                } else {
+                    alert('❌ PostgreSQL connection failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error testing PostgreSQL connection: ' + error);
+            });
+        }
+
+        function testSqlServerConnection() {
+            const formData = {
+                host: document.getElementById('sqlserver_host').value,
+                instance: document.getElementById('sqlserver_instance').value,
+                port: document.getElementById('sqlserver_port').value,
+                user: document.getElementById('sqlserver_user').value,
+                password: document.getElementById('sqlserver_password').value
+            };
+
+            fetch('/api/test-sqlserver-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ SQL Server connection successful!');
+                } else {
+                    alert('❌ SQL Server connection failed:\n' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error testing SQL Server connection: ' + error);
+            });
+        }
+
+        // Handle shared databases form submission
+        document.getElementById('shared-databases-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const selectedDbs = [];
+            document.querySelectorAll('input[name="shared_databases"]:checked').forEach(checkbox => {
+                try {
+                    // Parse and normalize database type
+                    const dbInfo = JSON.parse(checkbox.value);
+                    // Normalize sqlserver type to match backend expectations
+                    const normalizedType = dbInfo.type === 'sqlserver' ? 'sqlserver' : dbInfo.type;
+                    if (dbInfo.name && normalizedType && ['mysql', 'postgres', 'sqlserver'].includes(normalizedType)) {
+                        selectedDbs.push(JSON.stringify({
+                            name: dbInfo.name,
+                            type: normalizedType
+                        }));
+                    } else {
+                        console.error('Invalid database entry:', dbInfo);
+                    }
+                } catch (err) {
+                    console.error('Error parsing checkbox value:', checkbox.value, err);
+                }
+            });
+
+            console.log('Submitting shared databases:', selectedDbs);
+
+            if (selectedDbs.length === 0) {
+                alert('Please select at least one valid database.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('form_type', 'shared_databases');
+            selectedDbs.forEach(db => formData.append('shared_databases', db));
+
+            fetch('/configuration', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to save shared databases');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting shared databases:', error);
+                alert('Error saving shared databases: ' + error.message);
+            });
+        });
+
+        document.getElementById('mysql-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = {
+                host: document.getElementById('mysql_host').value,
+                port: document.getElementById('mysql_port').value,
+                user: document.getElementById('mysql_user').value,
+                password: document.getElementById('mysql_password').value
+            };
+
+            fetch('/api/save-mysql-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('MySQL config response:', data);
+                if (data.success) {
+                    alert('✅ MySQL configuration saved successfully!');
+                    updateDatabaseList(data.databases || [], 'mysql');
+                    switchTab('shared-databases');
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Failed to save MySQL configuration'));
+                }
+            })
+            .catch(error => {
+                alert('Error saving MySQL configuration: ' + error);
+            });
+        });
+
+        document.getElementById('postgres-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = {
+                host: document.getElementById('postgres_host').value,
+                port: document.getElementById('postgres_port').value,
+                user: document.getElementById('postgres_user').value,
+                password: document.getElementById('postgres_password').value
+            };
+
+            fetch('/api/save-postgres-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('PostgreSQL config response:', data);
+                if (data.success) {
+                    alert('✅ PostgreSQL configuration saved successfully!');
+                    updateDatabaseList(data.databases || [], 'postgres');
+                    switchTab('shared-databases');
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Failed to save PostgreSQL configuration'));
+                }
+            })
+            .catch(error => {
+                alert('Error saving PostgreSQL configuration: ' + error);
+            });
+        });
+
+        document.getElementById('sqlserver-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = {
+                host: document.getElementById('sqlserver_host').value,
+                instance: document.getElementById('sqlserver_instance').value,
+                port: document.getElementById('sqlserver_port').value,
+                user: document.getElementById('sqlserver_user').value,
+                password: document.getElementById('sqlserver_password').value
+            };
+
+            fetch('/api/save-sqlserver-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ SQL Server configuration saved successfully!');
+                    updateDatabaseList(data.databases || [], 'sqlserver');
+                    switchTab('shared-databases');
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Failed to save SQL Server configuration'));
+                }
+            })
+            .catch(error => {
+                alert('Error saving SQL Server configuration: ' + error);
+            });
+        });
+
+        function updateDatabaseList(databases, dbType) {
+            console.log('Updating database list:', databases, 'Type:', dbType);
+            const dbList = document.getElementById('shared_databases_list');
+            dbList.innerHTML = '';
+
+            if (!Array.isArray(databases) || databases.length === 0) {
+                dbList.innerHTML = '<div style="color: #bbb;">No databases available</div>';
+                return;
+            }
+
+            databases.forEach(db => {
+                if (!db || typeof db !== 'object' || !db.name || !db.type) {
+                    console.warn('Invalid database entry:', db);
+                    return;
+                }
+
+                // Normalize database type for display
+                const normalizedType = db.type.toLowerCase();
+                const div = document.createElement('div');
+                div.className = 'database-item';
+                
+                // Check if this database is in the shared list
+                const isChecked = sharedDatabasesFromServer.some(sdb => 
+                    sdb.name === db.name && sdb.type.toLowerCase() === normalizedType
+                ) ? 'checked' : '';
+
+                div.innerHTML = `
+                    <input type="checkbox" class="database-checkbox" 
+                        id="db_${db.name || 'unknown'}" name="shared_databases" 
+                        value='${JSON.stringify({name: db.name, type: normalizedType})}' ${isChecked}>
+                    <div class="database-info">
+                        <div class="database-name">${db.name || 'Unknown Database'}</div>
+                        <div class="database-meta">
+                            <span class="database-type ${normalizedType}-type">
+                                <i class="fas fa-${normalizedType === 'mysql' ? 'database' : 
+                                                normalizedType === 'postgres' ? 'server' : 
+                                                'cube'}"></i>
+                                ${normalizedType.toUpperCase()}
+                            </span>
+                            <span class="database-size">${db.size ? db.size + ' MB' : 'Size unknown'}</span>
+                        </div>
+                    </div>
+                `;
+                dbList.appendChild(div);
+            });
+        }
+
+        // Initialize forms with existing configs
+        fetch('/api/check-mysql-config')
+            .then(response => response.json())
+            .then(data => {
+                if (data.has_config) {
+                    document.getElementById('mysql_host').value = data.config.host || '';
+                    document.getElementById('mysql_port').value = data.config.port || '3306';
+                    document.getElementById('mysql_user').value = data.config.user || '';
+                }
+            });
+
+        fetch('/api/check-postgres-config')
+            .then(response => response.json())
+            .then(data => {
+                if (data.has_config) {
+                    document.getElementById('postgres_host').value = data.config.host || '';
+                    document.getElementById('postgres_port').value = data.config.port || '5432';
+                    document.getElementById('postgres_user').value = data.config.user || '';
+                }
+            });
+
+        fetch('/api/check-sqlserver-config')
+            .then(response => response.json())
+            .then(data => {
+                if (data.has_config) {
+                    document.getElementById('sqlserver_host').value = data.config.host || '';
+                    document.getElementById('sqlserver_port').value = data.config.port || '1433';
+                    document.getElementById('sqlserver_user').value = data.config.user || '';
+                }
+            });
+    </script>
+</body>
+</html>

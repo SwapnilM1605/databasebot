@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBWhiz - Workspace</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
+    <style>
+        :root {
+            --primary-color: #4da8da;
+            --secondary-color: #232222;
+            --accent-color: #6bb9e6;
+            --background-color: #f9fafb;
+            --text-color: #333333;
+            --success-color: #3c763d;
+            --error-color: #a94442;
+            --info-color: #31708f;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: white;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3a3a3a;
+        }
+
+        #databaseList {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) transparent;
+        }
+
+        #databaseList::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #databaseList::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #databaseList::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .database-item {
+            margin-bottom: 12px;
+        }
+
+        .database-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #3a4a5c, #2c3e50);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #4a5a6c;
+        }
+
+        .database-header:hover {
+            background: linear-gradient(135deg, #4a5a6c, #34495e);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .database-name {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+
+        .shared-label {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-icon {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+            color: var(--accent-color);
+        }
+
+        .dropdown-icon.open {
+            transform: rotate(90deg);
+        }
+
+        .table-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .table-list.show {
+            max-height: 500px;
+        }
+
+        .table-item {
+            padding: 10px 20px;
+            background-color: #4a5a6c;
+            margin: 6px 0;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .table-item:hover {
+            background-color: #5a6a7c;
+            transform: translateX(5px);
+        }
+
+        .no-data {
+            padding: 15px;
+            color: #aaa;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            background-color: var(--background-color);
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 250px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--secondary-color);
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3c94c4, #5aa5d2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #27ae60, #219a52);
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #7f8c8d, #6d7676);
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: linear-gradient(135deg, #6d7676, #5a6267);
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .content p {
+            color: var(--text-color);
+            font-size: 16px;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(35, 34, 34, 0.7);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            width: 550px;
+            max-width: 90%;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .popup h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: var(--secondary-color);
+            font-size: 1.6rem;
+            font-weight: 600;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background-color: #fafbfc;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(77, 168, 218, 0.1);
+            background-color: white;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .close-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .close-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        .toast {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1002;
+            animation: slideIn 0.3s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-weight: 500;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateX(100px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0);
+            }
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 18px;
+            height: 18px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Create Database Modal Styles */
+        .create-db-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            width: 450px;
+            max-width: 90%;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .create-db-popup h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: var(--secondary-color);
+            font-size: 1.6rem;
+            font-weight: 600;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .db-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .db-type-option {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+
+        .db-type-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(77, 168, 218, 0.05);
+        }
+
+        .db-type-option.selected {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(77, 168, 218, 0.1), rgba(107, 185, 230, 0.1));
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .db-type-option svg {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 8px;
+            fill: currentColor;
+        }
+
+        .db-type-option span {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .popup, .create-db-popup {
+                width: 95%;
+                padding: 30px 20px;
+            }
+
+            .db-type-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>Databases</span>
+        </div>
+        <div id="databaseList"></div>
+    </div>
+    <div class="main-content" id="mainContent">
+        <div class="container">
+            <div class="header">
+                <h1>My Workspace</h1>
+                <button class="btn btn-back" onclick="window.location.href='/app'">Back to Chat</button>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="createDbButton">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <ellipse cx="10" cy="4" rx="6" ry="2" stroke="#fff" stroke-width="1.5" fill="none"/>
+                        <path d="M4 4V16C4 17.1046 6.68629 18 10 18C13.3137 18 16 17.1046 16 16V4" stroke="#fff" stroke-width="1.5" fill="none"/>
+                        <ellipse cx="10" cy="8" rx="6" ry="2" stroke="#fff" stroke-width="1.2" fill="none"/>
+                        <ellipse cx="10" cy="12" rx="6" ry="2" stroke="#fff" stroke-width="1.2" fill="none"/>
+                        <circle cx="14.5" cy="5.5" r="3" fill="#4facfe" stroke="#fff" stroke-width="1"/>
+                        <path d="M13 5.5H16M14.5 4V7" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                    Create Database
+                </button>
+                <button class="btn btn-secondary" id="uploadFileButton">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 2H12L16 6V18H5C4.44772 18 4 17.5523 4 17V3C4 2.44772 4.44772 2 5 2Z" stroke="#fff" stroke-width="1.5" fill="none"/>
+                        <path d="M12 2V6H16" stroke="#fff" stroke-width="1.5" fill="none"/>
+                        <path d="M10 8V14M10 8L8 10M10 8L12 10" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7 16H13" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    Upload File
+                </button>
+            </div>
+            <div class="content">
+                <p>Manage your databases and upload data files to create new tables.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload File Popup -->
+    <div class="overlay" id="uploadOverlay"></div>
+    <div class="popup" id="uploadPopup">
+        <h3>Upload File</h3>
+        <form class="upload-form" id="uploadForm">
+            <div class="form-group">
+                <label for="dbSelect">Select Database</label>
+                <select id="dbSelect" name="db_name" required>
+                    <option value="">Select a personal database</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="dbType">Database Type</label>
+                <select id="dbType" name="db_type" required>
+                    <option value="mysql">MySQL</option>
+                    <option value="postgres">PostgreSQL</option>
+                    <option value="sqlserver">SQL Server</option>
+                </select>
+            </div>
+            <div class="form-group" id="newDbInput" style="display: none;">
+                <label for="newDbName">New Database Name</label>
+                <input type="text" id="newDbName" name="new_db_name" placeholder="Enter database name">
+            </div>
+            <div class="form-group">
+                <label for="tableName">Table Name</label>
+                <input type="text" id="tableName" name="table_name" placeholder="Enter table name" required>
+            </div>
+            <div class="form-group">
+                <label for="fileInput">Choose File</label>
+                <input type="file" id="fileInput" name="file" accept=".csv,.xlsx,.xls" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn close-btn" id="closePopup">Close</button>
+                <button type="submit" class="btn btn-primary" id="uploadSubmit">Upload</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let currentUsername = null;
+        let sharedDatabases = [];
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Show upload popup
+        function showUploadPopup() {
+            document.getElementById('uploadOverlay').style.display = 'block';
+            document.getElementById('uploadPopup').style.display = 'block';
+            loadPersonalDatabases();
+            document.getElementById('tableName').value = '';
+        }
+
+        // Hide upload popup
+        function hideUploadPopup() {
+            document.getElementById('uploadOverlay').style.display = 'none';
+            document.getElementById('uploadPopup').style.display = 'none';
+            document.getElementById('uploadForm').reset();
+            document.getElementById('dbSelect').value = '';
+            document.getElementById('dbType').value = 'mysql';
+            document.getElementById('newDbInput').style.display = 'none';
+            document.getElementById('newDbName').value = '';
+            document.getElementById('tableName').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadSubmit').disabled = false;
+        }
+
+        // Load current user
+        async function loadCurrentUser() {
+            try {
+                const response = await fetch('/api/current-user');
+                const data = await response.json();
+                if (data.username) {
+                    currentUsername = data.username;
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Failed to load current user:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Load shared databases
+        async function loadSharedDatabases() {
+            try {
+                const response = await fetch('/api/shared-databases');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                sharedDatabases = data.shared_databases || [];
+            } catch (error) {
+                console.error('Failed to load shared databases:', error);
+                sharedDatabases = [];
+            }
+        }
+
+        // Load personal databases for upload form
+        async function loadPersonalDatabases() {
+            try {
+                const response = await fetch('/api/user-databases');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                let options = '<option value="">Select a database</option>';
+                if (data.databases && Array.isArray(data.databases) && data.databases.length > 0) {
+                    data.databases.sort((a, b) => a.name.localeCompare(b.name));
+                    data.databases.forEach(db => {
+                        if (!sharedDatabases.some(sharedDb => sharedDb.name === db.name && sharedDb.type === db.type)) {
+                            options += `<option value="${db.name}" data-type="${db.type}">${db.name} (${db.type})</option>`;
+                        }
+                    });
+                }
+                document.getElementById('dbSelect').innerHTML = options;
+            } catch (error) {
+                console.error('Error loading databases:', error);
+                document.getElementById('dbSelect').innerHTML = '<option value="">Error loading databases</option>';
+            }
+        }
+
+        // Load user databases
+        async function loadDatabases() {
+            try {
+                const userResponse = await fetch('/api/user-databases');
+                if (!userResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${userResponse.status}`);
+                }
+                const userData = await userResponse.json();
+
+                const databaseList = document.getElementById('databaseList');
+                databaseList.innerHTML = '';
+
+                if (userData.databases && userData.databases.length > 0) {
+                    await loadSharedDatabases();
+
+                    userData.databases.forEach(db => {
+                        const isShared = sharedDatabases.some(sharedDb => sharedDb.name === db.name && sharedDb.type === db.type);
+                        const isPersonal = db.name.startsWith(`${currentUsername}_`) || db.name === currentUsername;
+
+                        const dbItem = document.createElement('div');
+                        dbItem.className = 'database-item';
+                        dbItem.innerHTML = `
+                            <div class="database-header" data-db="${db.name}" data-db-type="${db.type}">
+                                <span class="database-name">
+                                    ${db.name} (${db.type})
+                                    ${isShared ? '<span class="shared-label">Shared</span>' : ''}
+                                </span>
+                                <span class="dropdown-icon">▶</span>
+                            </div>
+                            <div class="table-list" id="tableList-${db.name}-${db.type}"></div>
+                        `;
+                        databaseList.appendChild(dbItem);
+
+                        const dbHeader = dbItem.querySelector('.database-header');
+                        dbHeader.addEventListener('click', async () => {
+                            const tableList = dbItem.querySelector('.table-list');
+                            const dropdownIcon = dbHeader.querySelector('.dropdown-icon');
+                            const isOpen = tableList.classList.contains('show');
+
+                            if (!isOpen) {
+                                await loadTables(db.name, db.type, tableList);
+                                tableList.classList.add('show');
+                                dropdownIcon.classList.add('open');
+                            } else {
+                                tableList.classList.remove('show');
+                                dropdownIcon.classList.remove('open');
+                            }
+                        });
+                    });
+                } else {
+                    databaseList.innerHTML = '<div class="no-data">No databases available</div>';
+                }
+            } catch (error) {
+                console.error('Failed to load databases:', error);
+                document.getElementById('databaseList').innerHTML = '<div class="no-data">Error loading databases</div>';
+            }
+        }
+
+        // Load tables for a database
+        async function loadTables(database, dbType, tableListElement) {
+            try {
+                const response = await fetch('/api/database-tables', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ database, type: dbType })
+                });
+                const data = await response.json();
+                tableListElement.innerHTML = '';
+
+                if (data.tables && data.tables.length > 0) {
+                    data.tables.forEach(table => {
+                        const tableItem = document.createElement('div');
+                        tableItem.className = 'table-item';
+                        tableItem.innerHTML = `<span>${table}</span>`;
+                        tableListElement.appendChild(tableItem);
+                    });
+                } else {
+                    tableListElement.innerHTML = '<div class="no-data">No tables available</div>';
+                }
+            } catch (error) {
+                console.error('Failed to load tables:', error);
+                tableListElement.innerHTML = '<div class="no-data">Error loading tables</div>';
+            }
+        }
+
+        // Create a new database
+        async function createDatabase() {
+            if (!currentUsername) {
+                showToast('Please log in to create databases', 'error');
+                return;
+            }
+
+            try {
+                const enterpriseCheck = await fetch('/api/current-enterprise');
+                if (!enterpriseCheck.ok) throw new Error('Failed to fetch enterprise info');
+                const enterpriseData = await enterpriseCheck.json();
+
+                if (!enterpriseData?.enterprise_id) {
+                    showToast('You must be part of an enterprise to create databases', 'error');
+                    return;
+                }
+
+                const dbName = prompt('Enter Database Name:');
+                if (!dbName) return;
+
+                const dbType = prompt('Enter Database Type (mysql/postgres/sqlserver):').toLowerCase();
+                if (!['mysql', 'postgres', 'sqlserver'].includes(dbType)) {
+                    showToast('Invalid database type', 'error');
+                    return;
+                }
+
+                if (dbType === 'sqlserver') {
+                    const hasConfig = await checkSqlServerConfig();
+                    if (!hasConfig) {
+                        showToast('SQL Server is not configured for your enterprise', 'error');
+                        return;
+                    }
+                }
+
+                const createBtn = document.getElementById('createDbButton');
+                createBtn.disabled = true;
+                createBtn.innerHTML = '<span class="spinner"></span> Creating...';
+
+                try {
+                    const response = await fetch('/api/create-database', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            database_name: dbName,
+                            type: dbType,
+                            enterprise_id: enterpriseData.enterprise_id
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Creation failed');
+
+                    showToast(`Database "${dbName}" (${dbType}) created successfully!`, 'success');
+                    await loadDatabases();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                } finally {
+                    createBtn.disabled = false;
+                    createBtn.innerHTML = 'Create Database';
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function checkSqlServerConfig() {
+            try {
+                const response = await fetch('/api/check-sqlserver-config');
+                const data = await response.json();
+                return data.has_config;
+            } catch (error) {
+                console.error('Error checking SQL Server config:', error);
+                return false;
+            }
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCurrentUser();
+            await loadDatabases();
+
+            document.getElementById('createDbButton').addEventListener('click', createDatabase);
+            document.getElementById('uploadFileButton').addEventListener('click', showUploadPopup);
+            document.getElementById('closePopup').addEventListener('click', hideUploadPopup);
+
+            document.getElementById('dbSelect').addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const dbType = selectedOption.dataset.type || 'mysql';
+                document.getElementById('dbType').value = dbType;
+                document.getElementById('newDbInput').style.display = this.value === 'new' ? 'block' : 'none';
+                document.getElementById('newDbName').value = '';
+            });
+
+            document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const dbSelect = document.getElementById('dbSelect');
+                const dbType = document.getElementById('dbType').value;
+                const newDbName = document.getElementById('newDbName').value;
+                const tableName = document.getElementById('tableName').value;
+                const fileInput = document.getElementById('fileInput');
+
+                if (!fileInput.files[0] || !tableName || (!dbSelect.value && !newDbName)) {
+                    alert('Please provide a file, select a database or enter a new database name, and enter a table name.');
+                    return;
+                }
+
+                const uploadSubmit = document.getElementById('uploadSubmit');
+                uploadSubmit.disabled = true;
+                uploadSubmit.innerHTML = '<span class="spinner"></span> Uploading...';
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('db_name', dbSelect.value || newDbName);
+                formData.append('table_name', tableName);
+                formData.append('db_type', dbType);
+
+                try {
+                    let targetDb = dbSelect.value || newDbName;
+                    if (newDbName) {
+                        const enterpriseResponse = await fetch('/api/current-enterprise');
+                        if (!enterpriseResponse.ok) {
+                            throw new Error('Failed to fetch enterprise details');
+                        }
+                        const enterpriseData = await enterpriseResponse.json();
+                        if (!enterpriseData?.enterprise_id) {
+                            throw new Error('You must be part of an enterprise to create databases');
+                        }
+
+                        const createResponse = await fetch('/api/create-database', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                            body: JSON.stringify({ database_name: newDbName, type: dbType, enterprise_id: enterpriseData.enterprise_id })
+                        });
+
+                        const createData = await createResponse.json();
+                        if (!createData.success) {
+                            throw new Error(createData.error || 'Failed to create database');
+                        }
+                    }
+
+                    const response = await fetch('/upload_file', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.message) {
+                        showToast(data.message, 'success');
+                        hideUploadPopup();
+                        await loadDatabases();
+                        setTimeout(async () => {
+                            const dbElement = document.querySelector(`[data-db="${targetDb}"][data-db-type="${dbType}"]`);
+                            if (dbElement) {
+                                const tableList = document.getElementById(`tableList-${targetDb}-${dbType}`);
+                                await loadTables(targetDb, dbType, tableList);
+                                tableList.classList.add('show');
+                                dbElement.querySelector('.dropdown-icon').classList.add('open');
+                                dbElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                        }, 500);
+                    } else {
+                        showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    showToast('Error uploading file: ' + error.message, 'error');
+                } finally {
+                    uploadSubmit.disabled = false;
+                    uploadSubmit.innerHTML = 'Upload';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
